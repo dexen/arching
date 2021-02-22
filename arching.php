@@ -113,9 +113,8 @@ function substituteInclude(string $line) : string
 	foreach ($Cfg->includeDirs() as $dir) {
 		$pn = sprintf('%s/%s', $dir, $rpn);
 		if (file_exists($pn))
-			return inlineAnInclude($rpn, $pn);
-#td(compact('line', 'rpn', 'dir', 'pn'));
-	}
+			return inlineAnInclude($rpn, $pn); }
+	throw new \RuntimeException(sprintf('include file not found for "%s"', $rpn));
 }
 
 foreach ($Cfg->inputFiles() as $in_pn) {
