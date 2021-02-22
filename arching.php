@@ -71,8 +71,56 @@ function outfl($fmt, ...$a) { global $Cfg; $Cfg->output(sprintf($fmt, ...$a)); $
 
 function outmkrule(...$a) { global $Cfg; foreach ($a as $str) $Cfg->outmkrule($str); }
 
+function interpretQuotedString(string $str) : string
+{
+	return stripcslashes(trim($str, "\"'"));
+}
+
+function extractRequirePathname(string $line) : string
+{
+	$a = token_get_all('<?php ' .$line);
+	while (($rcd = array_shift($a)) !== null) {
+		switch ($rcd[0]) {
+		case T_OPEN_TAG:
+		case T_WHITESPACE:
+			break;
+		case T_REQUIRE:
+			$rcd2 = array_shift($a);
+			if ($rcd2[0] !== T_WHITESPACE)
+				throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
+			$rcd3 = array_shift($a);
+			if ($rcd3[0] === T_CONSTANT_ENCAPSED_STRING)
+				return interpretQuotedString($rcd3[1]);
+			else
+				throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
+		default:
+			throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd[0], $rcd[1], token_name($rcd[0]))); } }
+}
+
+function inlineAnInclude(string $selector, string $pn) : string
+{
+	return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .file_get_contents($pn);
+}
+
+function substituteInclude(string $line) : string
+{
+	global $Cfg;
+
+	if (!preg_match('/^require /', $line))
+		return $line;
+
+	$rpn = extractRequirePathname($line);
+	foreach ($Cfg->includeDirs() as $dir) {
+		$pn = sprintf('%s/%s', $dir, $rpn);
+		if (file_exists($pn))
+			return inlineAnInclude($rpn, $pn);
+#td(compact('line', 'rpn', 'dir', 'pn'));
+	}
+}
+
 foreach ($Cfg->inputFiles() as $in_pn) {
 	$h = fopen($in_pn, 'r');
-	while (($line = fgets($h)) !== false)
-		output($line);
+	while (($line = fgets($h)) !== false) {
+		output(substituteInclude($line));
+	}
 }
