@@ -97,9 +97,28 @@ function extractRequirePathname(string $line) : string
 			throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd[0], $rcd[1], token_name($rcd[0]))); } }
 }
 
+class SyntaxCheckError extends ParseError
+{
+	function __construct(string $file, ParseError $Previous)
+	{
+		parent::__construct($Previous->getMessage(), $Previous->getCode(), $Previous);
+		$this->file = $file;
+		$this->line = $Previous->line;
+	}
+}
+
+function expectCorrectPhpSyntax(string $code, string $file) : string
+{
+	try {
+		token_get_all($code, TOKEN_PARSE); }
+	catch (ParseError $E) {
+		throw new SyntaxCheckError($file, $E); }
+	return $code;
+}
+
 function inlineAnInclude(string $selector, string $pn) : string
 {
-	return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .file_get_contents($pn);
+	return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
 }
 
 function substituteInclude(string $line) : string
@@ -118,6 +137,7 @@ function substituteInclude(string $line) : string
 }
 
 foreach ($Cfg->inputFiles() as $in_pn) {
+	expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
 	$h = fopen($in_pn, 'r');
 	while (($line = fgets($h)) !== false) {
 		output(substituteInclude($line));
