@@ -149,6 +149,4 @@ foreach ($Cfg->inputFiles() as $in_pn) {
 	expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
 	$h = fopen($in_pn, 'r');
 	while (($line = fgets($h)) !== false) {
-		output(substituteInclude($line));
-	}
-}
+		output(substituteInclude($line)); } }
