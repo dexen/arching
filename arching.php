@@ -121,6 +121,11 @@ function inlineAnInclude(string $selector, string $pn) : string
 	return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
 }
 
+function inlineArchingInput(string $selector) : string
+{
+	return sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
+}
+
 function substituteInclude(string $line) : string
 {
 	global $Cfg;
@@ -129,6 +134,10 @@ function substituteInclude(string $line) : string
 		return $line;
 
 	$rpn = extractRequirePathname($line);
+
+	if ($rpn === 'arching-input.php')
+		return inlineArchingInput($rpn);
+
 	foreach ($Cfg->includeDirs() as $dir) {
 		$pn = sprintf('%s/%s', $dir, $rpn);
 		if (file_exists($pn))
