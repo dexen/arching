@@ -76,9 +76,54 @@ class Cfg
 	function sourceMapToApplyPN() : ?string { return $this->apply_source_map_pn; }
 
 	function sourceMapToApply() : ?string { return $this->apply_source_map; }
+
+	function sourceMapPN() : ?string { return $this->source_map_pn; }
 }
 
+
+class SourceMap
+{
+	protected $Cfg;
+	protected $list = [];
+
+	function __construct(Cfg $Cfg) { $this->Cfg = $Cfg; }
+
+	function noteRequire(string $file, int $fromOutputLine, int $numLines)
+	{
+		$this->list[] = [ $file, $fromOutputLine, $numLines ];
+	}
+
+	function asMap() : array
+	{
+		$ret = [];
+			# FIXME
+			# this assumes non-overlapping files
+			# need adaptation for overlapping files (includes-in-includes)
+		foreach ($this->list as $rcd)
+			$ret[$rcd[1]] = [$rcd[0], $rcd[1]+$rcd[2]-1];
+		return $ret;
+	}
+
+	function sourceMapOutput()
+	{
+		$v = file_put_contents(
+			$this->Cfg->sourceMapPN(),
+			json_encode($this->asMap(),
+				 JSON_UNESCAPED_SLASHES | JSON_NUMERIC_CHECK | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR ) );
+		if ($v === false)
+			throw new \RuntimeException('could not write source map');
+	}
+
+	function sourceMapHandleOutput()
+	{
+		if ($this->Cfg->sourceMapPN())
+			$this->sourceMapOutput();
+	}
+}
+
+
 $Cfg = new Cfg($argv);
+$SourceMap = new SourceMap($Cfg);
 
 function output(...$a) { global $Cfg; foreach ($a as $str) $Cfg->output($str); }
 function outl(...$a) { global $Cfg; foreach ($a as $str) $Cfg->output($str); $Cfg->output("\n"); }
@@ -134,6 +179,9 @@ function expectCorrectPhpSyntax(string $code, string $file) : string
 
 function inlineAnInclude(string $selector, string $pn) : string
 {
+	global $SourceMap;
+
+	$SourceMap->noteRequire($pn, 100, count(explode("\n", file_get_contents($pn))));
 	return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
 }
 
@@ -187,3 +235,5 @@ foreach ($Cfg->inputFiles() as $in_pn) {
 	$h = fopen($in_pn, 'r');
 	while (($line = fgets($h)) !== false) {
 		output(applySourceMap(substituteInclude($line))); } }
+
+$SourceMap->sourceMapHandleOutput();
