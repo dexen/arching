@@ -15,7 +15,7 @@ if (in_array($argv[1] ?? null, [ '-h', '--help']))
 class Cfg
 {
 	protected $argv;
-	protected $include_dirs = [];
+	protected $project_include_dirs = [];
 	protected $input_files = [];
 	protected $output_pn = '/dev/stdout';
 	protected $output_h;
@@ -33,7 +33,7 @@ class Cfg
 			else if ($a === '--mkrule')
 				$this->mkrule_pn = array_shift($a);
 			else if ($collecting_dirs && is_dir($arg))
-				$this->include_dirs[] = $arg;
+				$this->project_include_dirs[] = $arg;
 			else if ($arg === '--')
 				$collecting_dirs = false;
 			else if (is_file($arg)) {
@@ -57,7 +57,9 @@ class Cfg
 
 	function outmkrule(string $str) { fwrite($this->output_h, $str); }
 
-	function includeDirs() : array { return $this->include_dirs; }
+	function archingIncludeDirs() : array { return [ sprintf('%s/%s', __DIR__, 'includes') ]; }
+
+	function projectIncludeDir() : array { return $this->project_include_dirs; }
 
 	function inputFiles() : array { return $this->input_files; }
 }
@@ -138,7 +140,12 @@ function substituteInclude(string $line) : string
 	if ($rpn === 'arching-input.php')
 		return inlineArchingInput($rpn);
 
-	foreach ($Cfg->includeDirs() as $dir) {
+	if (strncmp($rpn, 'arching-', 8) === 0)
+		$include_dirs = $Cfg->archingIncludeDirs();
+	else
+		$include_dirs = $Cfg->projectIncludeDir();
+
+	foreach ($include_dirs as $dir) {
 		$pn = sprintf('%s/%s', $dir, $rpn);
 		if (file_exists($pn))
 			return inlineAnInclude($rpn, $pn); }
