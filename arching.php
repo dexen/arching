@@ -168,13 +168,16 @@ function applySourceMap(string $content) : string
 {
 	global $Cfg;
 
+	$placeholder = 'placeholder:2780d720-9b9d-' .'4415-82a7-d9388630cba6' .';source map as PHP array contents';
+
 	if ($Cfg->sourceMapToApply() === null)
 		return $content;
-	$a = json_decode($Cfg->sourceMapToApply(), $associative = true, $max_dept = null, JSON_THROW_ON_ERROR);
-	$v = var_export($a, $return = true);
-td(compact('a', 'v'));
+	$a = json_decode($Cfg->sourceMapToApply(), $associative = true, $max_dept = 512, JSON_THROW_ON_ERROR);
+	$mapstr = '';
+	foreach ($a as $k => $v)
+		$mapstr .= sprintf('%d=>[%s, %d], ', $k, var_export((string)$v[0], $return = true), $v[1]);
 
-	return str_replace('$source_map = [/*2780d720-9b9d-4415-82a7-d9388630cba6*/];');
+	return str_replace('/*' .$placeholder .'*/', $mapstr, $content);
 }
 
 foreach ($Cfg->inputFiles() as $in_pn) {
