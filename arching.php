@@ -22,6 +22,7 @@ class Cfg
 	protected $output_h;
 	protected $mkrule_pn = '/dev/null';
 	protected $mkrule_h;
+	protected $source_map_pn;
 	protected $apply_source_map;
 	protected $apply_source_map_pn;
 
@@ -71,7 +72,7 @@ class Cfg
 
 	function inputFiles() : array { return $this->input_files; }
 
-	function sourceMapPN() : ?string { return $this->apply_source_map_pn; }
+	function sourceMapToApplyPN() : ?string { return $this->apply_source_map_pn; }
 
 	function sourceMapToApply() : ?string { return $this->apply_source_map; }
 }
