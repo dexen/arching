@@ -1,6 +1,7 @@
 <?php
 
 function td(...$a) { foreach ($a as $v) var_dump($v); die('td()'); }
+function tp(...$a) { foreach ($a as $v) var_dump($v); echo('tp()'); return $a[0]??null; }
 
 function showHelp()
 {
