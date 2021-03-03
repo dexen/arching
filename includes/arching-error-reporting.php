@@ -31,7 +31,7 @@ set_error_handler(function(int $errno, string $errstr, string $errfile = null, i
 
 		foreach ($source_map as $from => $rcd)
 			if (($from <= $line) && ($rcd[1] >= $line))
-				return $line - $from;
+				return $line - $from+1;
 
 		return '?';
 	};
