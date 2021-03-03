@@ -125,7 +125,15 @@ class SourceMap
 $Cfg = new Cfg($argv);
 $SourceMap = new SourceMap($Cfg);
 
-function output(...$a) { global $Cfg; foreach ($a as $str) $Cfg->output($str); }
+function output(...$a) : int {
+	static $line_nr = 0;
+	global $Cfg;
+	foreach ($a as $str) {
+		$Cfg->output($str);
+		$line_nr += count(explode("\n", $str)) - 1; }
+	return $line_nr;
+}
+
 function outl(...$a) { global $Cfg; foreach ($a as $str) $Cfg->output($str); $Cfg->output("\n"); }
 function outputf($fmt, ...$a) { global $Cfg; $Cfg->output(sprintf($fmt, ...$a)); }
 function outfl($fmt, ...$a) { global $Cfg; $Cfg->output(sprintf($fmt, ...$a)); $Cfg->output("\n"); }
@@ -177,11 +185,11 @@ function expectCorrectPhpSyntax(string $code, string $file) : string
 	return $code;
 }
 
-function inlineAnInclude(string $selector, string $pn) : string
+function inlineAnInclude(string $selector, string $pn, $output_line_nr) : string
 {
 	global $SourceMap;
 
-	$SourceMap->noteRequire($pn, 100, count(explode("\n", file_get_contents($pn))));
+	$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
 	return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
 }
 
@@ -190,7 +198,7 @@ function inlineArchingInput(string $selector) : string
 	return sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
 }
 
-function substituteInclude(string $line) : string
+function substituteInclude(string $line, int $output_line_nr) : string
 {
 	global $Cfg;
 
@@ -210,7 +218,7 @@ function substituteInclude(string $line) : string
 	foreach ($include_dirs as $dir) {
 		$pn = sprintf('%s/%s', $dir, $rpn);
 		if (file_exists($pn))
-			return inlineAnInclude($rpn, $pn); }
+			return inlineAnInclude($rpn, $pn, $output_line_nr); }
 	throw new \RuntimeException(sprintf('include file not found for "%s"', $rpn));
 }
 
@@ -230,10 +238,11 @@ function applySourceMap(string $content) : string
 	return str_replace('/*' .$placeholder .'*/', $mapstr, $content);
 }
 
+$output_line_count = 0;
 foreach ($Cfg->inputFiles() as $in_pn) {
 	expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
 	$h = fopen($in_pn, 'r');
 	while (($line = fgets($h)) !== false) {
-		output(applySourceMap(substituteInclude($line))); } }
+		$output_line_count = output(applySourceMap(substituteInclude($line, $output_line_count+1))); } }
 
 $SourceMap->sourceMapHandleOutput();
