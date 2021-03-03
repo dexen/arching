@@ -6,7 +6,8 @@ function showHelp()
 {
 	echo "arching: package a PHP application into one file\n";
 	echo "usage:\n";
-	echo "	arching [ include_dir [ include_dir [ ... ]] [ -- ] ] file.php [ file.php [...] ] [ -o output.php ] [ --mkrule output.mk ]\n";
+	echo "	arching [ include_dir [ include_dir [ ... ]] [ -- ] ] file.php [ file.php [...] ] [ -o output.php ] [ --mkrule output.mk ] [ --source-map output.map ]\n";
+	echo "	arching --apply-source-map output.map input.php [ -o output.php ]\n";
 }
 
 if (in_array($argv[1] ?? null, [ '-h', '--help']))
@@ -21,6 +22,8 @@ class Cfg
 	protected $output_h;
 	protected $mkrule_pn = '/dev/null';
 	protected $mkrule_h;
+	protected $apply_source_map;
+	protected $apply_source_map_pn;
 
 	function __construct(array $argv)
 	{
@@ -28,12 +31,17 @@ class Cfg
 		$a = array_slice($argv, 1);
 		$collecting_dirs = true;
 		while (($arg = array_shift($a)) !== null) {
-			if ($arg === '-o')
+			if ($collecting_dirs && ($arg === '-o'))
 				$this->output_pn = array_shift($a);
-			else if ($a === '--mkrule')
+			else if ($collecting_dirs && ($a === '--mkrule'))
 				$this->mkrule_pn = array_shift($a);
 			else if ($collecting_dirs && is_dir($arg))
 				$this->project_include_dirs[] = $arg;
+			else if ($collecting_dirs && ($arg === '--source-map'))
+				$this->source_map_pn = array_shift($a);
+			else if ($collecting_dirs && ($arg === '--apply-source-map')) {
+				$this->apply_source_map_pn = array_shift($a);
+				$this->apply_source_map = file_get_contents($this->apply_source_map_pn); }
 			else if ($arg === '--')
 				$collecting_dirs = false;
 			else if (is_file($arg)) {
@@ -62,6 +70,10 @@ class Cfg
 	function projectIncludeDir() : array { return $this->project_include_dirs; }
 
 	function inputFiles() : array { return $this->input_files; }
+
+	function sourceMapPN() : ?string { return $this->apply_source_map_pn; }
+
+	function sourceMapToApply() : ?string { return $this->apply_source_map; }
 }
 
 $Cfg = new Cfg($argv);
@@ -152,8 +164,21 @@ function substituteInclude(string $line) : string
 	throw new \RuntimeException(sprintf('include file not found for "%s"', $rpn));
 }
 
+function applySourceMap(string $content) : string
+{
+	global $Cfg;
+
+	if ($Cfg->sourceMapToApply() === null)
+		return $content;
+	$a = json_decode($Cfg->sourceMapToApply(), $associative = true, $max_dept = null, JSON_THROW_ON_ERROR);
+	$v = var_export($a, $return = true);
+td(compact('a', 'v'));
+
+	return str_replace('$source_map = [/*2780d720-9b9d-4415-82a7-d9388630cba6*/];');
+}
+
 foreach ($Cfg->inputFiles() as $in_pn) {
 	expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
 	$h = fopen($in_pn, 'r');
 	while (($line = fgets($h)) !== false) {
-		output(substituteInclude($line)); } }
+		output(applySourceMap(substituteInclude($line))); } }
