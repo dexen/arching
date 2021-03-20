@@ -27,6 +27,7 @@ class Cfg
 	protected $source_map_pn;
 	protected $apply_source_map;
 	protected $apply_source_map_pn;
+	protected $directives_to_process = ['require'];
 
 	function __construct(array $argv)
 	{
@@ -36,6 +37,8 @@ class Cfg
 		while (($arg = array_shift($a)) !== null) {
 			if ($collecting_dirs && ($arg === '-o'))
 				$this->output_pn = array_shift($a);
+			else if ($collecting_dirs && ($arg === '--process-include'))
+				$this->directives_to_process[] = 'include';
 			else if ($collecting_dirs && ($a === '--mkrule'))
 				$this->mkrule_pn = array_shift($a);
 			else if ($collecting_dirs && is_dir($arg))
@@ -79,6 +82,8 @@ class Cfg
 	function sourceMapToApply() : ?string { return $this->apply_source_map; }
 
 	function sourceMapPN() : ?string { return $this->source_map_pn; }
+
+	function directivesToProcess() : array { return $this->directives_to_process; }
 }
 
 
