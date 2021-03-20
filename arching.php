@@ -11,9 +11,6 @@ function showHelp()
 	echo "	arching --apply-source-map output.map input.php [ -o output.php ]\n";
 }
 
-if (in_array($argv[1] ?? '--help', [ '-h', '--help']))
-	die(showHelp());
-
 class Cfg
 {
 	protected $argv;
@@ -121,6 +118,8 @@ class SourceMap
 	}
 }
 
+if (in_array($argv[1] ?? '--help', [ '-h', '--help']))
+	die(showHelp());
 
 $Cfg = new Cfg($argv);
 $SourceMap = new SourceMap($Cfg);
