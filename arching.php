@@ -163,6 +163,7 @@ function extractRequirePathname(string $line) : string
 		case T_OPEN_TAG:
 		case T_WHITESPACE:
 			break;
+		case T_INCLUDE:
 		case T_REQUIRE:
 			$rcd2 = array_shift($a);
 			if ($rcd2[0] !== T_WHITESPACE)
@@ -208,11 +209,20 @@ function inlineArchingInput(string $selector) : string
 	return sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
 }
 
+function substitutionRe() : string
+{
+	global $Cfg;
+
+	$quote = fn($str) => preg_quote($str, '/');
+
+	return '/^(' .implode('|', array_map($quote, $Cfg->directivesToProcess())) .')\\s+/';
+}
+
 function substituteInclude(string $line, int $output_line_nr) : string
 {
 	global $Cfg;
 
-	if (!preg_match('/^require /', $line))
+	if (!preg_match(substitutionRe(), $line))
 		return $line;
 
 	$rpn = extractRequirePathname($line);
