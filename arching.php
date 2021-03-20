@@ -11,6 +11,10 @@ function showHelp()
 	echo "	arching --apply-source-map output.map input.php [ -o output.php ]\n";
 }
 
+class ProcessingFailedException extends RuntimeException {}
+
+class IncludeNotFoundException extends ProcessingFailedException {}
+
 class Cfg
 {
 	protected $argv;
@@ -218,7 +222,7 @@ function substituteInclude(string $line, int $output_line_nr) : string
 		$pn = sprintf('%s/%s', $dir, $rpn);
 		if (file_exists($pn))
 			return inlineAnInclude($rpn, $pn, $output_line_nr); }
-	throw new \RuntimeException(sprintf('include file not found for "%s"', $rpn));
+	throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
 }
 
 function applySourceMap(string $content) : string
@@ -237,11 +241,23 @@ function applySourceMap(string $content) : string
 	return str_replace('/*' .$placeholder .'*/', $mapstr, $content);
 }
 
-$output_line_count = 0;
-foreach ($Cfg->inputFiles() as $in_pn) {
-	expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
-	$h = fopen($in_pn, 'r');
-	while (($line = fgets($h)) !== false) {
-		$output_line_count = output(applySourceMap(substituteInclude($line, $output_line_count+1))); } }
+try {
+	$output_line_count = 0;
+	foreach ($Cfg->inputFiles() as $in_pn) {
+		expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
+		$h = fopen($in_pn, 'r');
+		while (($line = fgets($h)) !== false) {
+			$output_line_count = output(applySourceMap(substituteInclude($line, $output_line_count+1))); } }
 
-$SourceMap->sourceMapHandleOutput();
+	$SourceMap->sourceMapHandleOutput(); }
+catch (IncludeNotFoundException $E) {
+	$L = function($str, ...$a) { if ($a) $str = sprintf($str, ...$a); fputs(STDERR, $str ."\n"); };
+
+	$L($E->getMessage());
+	$L('--');
+	$L('Include path:');
+	foreach ($Cfg->archingIncludeDirs() as $pn)
+		$L('	%s', $pn);
+	foreach ($Cfg->projectIncludeDir() as $pn)
+		$L('	%s', $pn);
+	die(1); }
