@@ -171,7 +171,7 @@ class SubstitutionEngine
 		if (is_string($token))
 			throw new \RuntimeException(sprintf('unexpected token "%s"; line: "%s"', $token, $line));
 		else
-			throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s); line: "%s"', $token[0], $token[1], token_name($token[0]), $line));
+			throw new \RuntimeException(sprintf('unexpected token %s: "%s"; line: "%s"', token_name($token[0]), $token[1], $line));
 	}
 
 	protected
