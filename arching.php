@@ -148,9 +148,17 @@ class SubstitutionEngine
 	}
 
 	protected
+	function substitutionRe() : string
+	{
+		$quote = fn($str) => preg_quote($str, '/');
+
+		return '/^(' .implode('|', array_map($quote, $this->Cfg->directivesToProcess())) .')\\s+/';
+	}
+
+	protected
 	function processOneLine(string $line, int $output_line_nr) : string
 	{
-		if (!preg_match(substitutionRe(), $line))
+		if (!preg_match($this->substitutionRe(), $line))
 			return $line;
 
 		$rpn = extractRequirePathname($line);
