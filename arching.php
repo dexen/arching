@@ -156,12 +156,35 @@ class SubstitutionEngine
 	}
 
 	protected
+	function extractRequirePathname($line) : string
+	{
+		$a = token_get_all('<?php ' .$line);
+		while (($rcd = array_shift($a)) !== null) {
+			switch ($rcd[0]) {
+			case T_OPEN_TAG:
+			case T_WHITESPACE:
+				break;
+			case T_INCLUDE:
+			case T_REQUIRE:
+				$rcd2 = array_shift($a);
+				if ($rcd2[0] !== T_WHITESPACE)
+					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
+				$rcd3 = array_shift($a);
+				if ($rcd3[0] === T_CONSTANT_ENCAPSED_STRING)
+					return interpretQuotedString($rcd3[1]);
+				else
+					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
+			default:
+				throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd[0], $rcd[1], token_name($rcd[0]))); } }
+	}
+
+	protected
 	function processOneLine(string $line, int $output_line_nr) : string
 	{
 		if (!preg_match($this->substitutionRe(), $line))
 			return $line;
 
-		$rpn = extractRequirePathname($line);
+		$rpn = $this->extractRequirePathname($line);
 
 		if ($rpn === 'arching-input.php')
 			return inlineArchingInput($rpn);
