@@ -258,13 +258,17 @@ function applySourceMap(string $content) : string
 	return str_replace('/*' .$placeholder .'*/', $mapstr, $content);
 }
 
+function processOneTranslationUnit(string $pn, string $content, int $output_line_count)
+{
+	expectCorrectPhpSyntax($content, $pn);
+	foreach (explode("\n", $content) as $line)
+		$output_line_count = output(applySourceMap(substituteInclude($line ."\n", $output_line_count+1)));
+	return $output_line_count;
+}
+
 function processOneFile(string $in_pn, int $output_line_count)
 {
-	expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
-	$h = fopen($in_pn, 'r');
-	while (($line = fgets($h)) !== false)
-		$output_line_count = output(applySourceMap(substituteInclude($line, $output_line_count+1)));
-	return $output_line_count;
+	return processOneTranslationUnit($in_pn, file_get_contents($in_pn), $output_line_count);
 }
 
 try {
