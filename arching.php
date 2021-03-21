@@ -258,13 +258,19 @@ function applySourceMap(string $content) : string
 	return str_replace('/*' .$placeholder .'*/', $mapstr, $content);
 }
 
+function processOneFile(string $in_pn, int $output_line_count)
+{
+	expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
+	$h = fopen($in_pn, 'r');
+	while (($line = fgets($h)) !== false)
+		$output_line_count = output(applySourceMap(substituteInclude($line, $output_line_count+1)));
+	return $output_line_count;
+}
+
 try {
 	$output_line_count = 0;
-	foreach ($Cfg->inputFiles() as $in_pn) {
-		expectCorrectPhpSyntax(file_get_contents($in_pn), $in_pn);
-		$h = fopen($in_pn, 'r');
-		while (($line = fgets($h)) !== false) {
-			$output_line_count = output(applySourceMap(substituteInclude($line, $output_line_count+1))); } }
+	foreach ($Cfg->inputFiles() as $in_pn)
+		$output_line_count = processOneFile($in_pn, $output_line_count+1);
 
 	$SourceMap->sourceMapHandleOutput(); }
 catch (IncludeNotFoundException $E) {
