@@ -183,7 +183,7 @@ class SubstitutionEngine
 				if ($rcd3[0] === T_CONSTANT_ENCAPSED_STRING)
 					return $this->interpretQuotedString($rcd3[1]);
 				else
-					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
+					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s); line: "%s"', $rcd3[0], $rcd3[1], token_name($rcd3[0]), $line));
 			default:
 				if (is_string($rcd))
 					throw new \RuntimeException(sprintf('unexpected token "%s"; line: "%s"', $rcd, $line));
