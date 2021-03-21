@@ -166,6 +166,15 @@ class SubstitutionEngine
 	}
 
 	protected
+	function onUnexpectedToken(/*string|array*/ $token, string $line)
+	{
+		if (is_string($token))
+			throw new \RuntimeException(sprintf('unexpected token "%s"; line: "%s"', $token, $line));
+		else
+			throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s); line: "%s"', $token[0], $token[1], token_name($token[0]), $line));
+	}
+
+	protected
 	function extractRequirePathname($line) : string
 	{
 		$a = token_get_all('<?php ' .$line);
@@ -178,17 +187,14 @@ class SubstitutionEngine
 			case T_REQUIRE:
 				$rcd2 = array_shift($a);
 				if ($rcd2[0] !== T_WHITESPACE)
-					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
+					$this->onUnexpectedToken($rcd2, $line);
 				$rcd3 = array_shift($a);
 				if ($rcd3[0] === T_CONSTANT_ENCAPSED_STRING)
 					return $this->interpretQuotedString($rcd3[1]);
 				else
-					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s); line: "%s"', $rcd3[0], $rcd3[1], token_name($rcd3[0]), $line));
+					$this->onUnexpectedToken($rcd3, $line);
 			default:
-				if (is_string($rcd))
-					throw new \RuntimeException(sprintf('unexpected token "%s"; line: "%s"', $rcd, $line));
-				else
-					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd[0] ??null, $rcd[1] ?? null, token_name($rcd[0]))); } }
+				$this->onUnexpectedToken($rcd, $line); } }
 	}
 
 	protected
