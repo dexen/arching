@@ -71,8 +71,6 @@ class Cfg
 
 	function output(string $str) { fwrite($this->output_h, $str); }
 
-	function outmkrule(string $str) { fwrite($this->output_h, $str); }
-
 	function archingIncludeDirs() : array { return [ sprintf('%s/%s', __DIR__, 'includes') ]; }
 
 	function projectIncludeDir() : array { return $this->project_include_dirs; }
@@ -256,39 +254,6 @@ function output(string $str) : int {
 
 function outputGenerator(Generator $G) { foreach ($G as $str) output($str); }
 
-function outl(...$a) { global $Cfg; foreach ($a as $str) $Cfg->output($str); $Cfg->output("\n"); }
-function outputf($fmt, ...$a) { global $Cfg; $Cfg->output(sprintf($fmt, ...$a)); }
-function outfl($fmt, ...$a) { global $Cfg; $Cfg->output(sprintf($fmt, ...$a)); $Cfg->output("\n"); }
-
-function outmkrule(...$a) { global $Cfg; foreach ($a as $str) $Cfg->outmkrule($str); }
-
-function interpretQuotedString(string $str) : string
-{
-	return stripcslashes(trim($str, "\"'"));
-}
-
-function extractRequirePathname(string $line) : string
-{
-	$a = token_get_all('<?php ' .$line);
-	while (($rcd = array_shift($a)) !== null) {
-		switch ($rcd[0]) {
-		case T_OPEN_TAG:
-		case T_WHITESPACE:
-			break;
-		case T_INCLUDE:
-		case T_REQUIRE:
-			$rcd2 = array_shift($a);
-			if ($rcd2[0] !== T_WHITESPACE)
-				throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
-			$rcd3 = array_shift($a);
-			if ($rcd3[0] === T_CONSTANT_ENCAPSED_STRING)
-				return interpretQuotedString($rcd3[1]);
-			else
-				throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
-		default:
-			throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd[0], $rcd[1], token_name($rcd[0]))); } }
-}
-
 class SyntaxCheckError extends ParseError
 {
 	function __construct(string $file, ParseError $Previous)
@@ -308,52 +273,6 @@ function expectCorrectPhpSyntax(string $code, string $file) : string
 	return $code;
 }
 
-function inlineAnInclude(string $selector, string $pn, $output_line_nr) : string
-{
-	global $SourceMap;
-
-	$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
-	return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
-}
-
-function inlineArchingInput(string $selector) : string
-{
-	return sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
-}
-
-function substitutionRe() : string
-{
-	global $Cfg;
-
-	$quote = fn($str) => preg_quote($str, '/');
-
-	return '/^(' .implode('|', array_map($quote, $Cfg->directivesToProcess())) .')\\s+/';
-}
-
-function substituteInclude(string $line, int $output_line_nr) : string
-{
-	global $Cfg;
-
-	if (!preg_match(substitutionRe(), $line))
-		return $line;
-
-	$rpn = extractRequirePathname($line);
-
-	if ($rpn === 'arching-input.php')
-		return inlineArchingInput($rpn);
-
-	if (strncmp($rpn, 'arching-', 8) === 0)
-		$include_dirs = $Cfg->archingIncludeDirs();
-	else
-		$include_dirs = $Cfg->projectIncludeDir();
-
-	foreach ($include_dirs as $dir) {
-		$pn = sprintf('%s/%s', $dir, $rpn);
-		if (file_exists($pn))
-			return inlineAnInclude($rpn, $pn, $output_line_nr); }
-	throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
-}
-
 function applySourceMap(string $content) : string
 {
 	global $Cfg;
@@ -370,19 +289,6 @@ function applySourceMap(string $content) : string
 	return str_replace('/*' .$placeholder .'*/', $mapstr, $content);
 }
 
-function processOneTranslationUnit(string $pn, string $content, int $output_line_count)
-{
-	expectCorrectPhpSyntax($content, $pn);
-	foreach (explode("\n", $content) as $line)
-		$output_line_count = output(applySourceMap(substituteInclude($line ."\n", $output_line_count+1)));
-	return $output_line_count;
-}
-
-function processOneFile(string $in_pn, int $output_line_count)
-{
-	return processOneTranslationUnit($in_pn, file_get_contents($in_pn), $output_line_count);
-}
-
 try {
 	$internalA = ['<?php'];
 	foreach ($Cfg->inputFiles() as $pn)
@@ -395,10 +301,6 @@ try {
 	outputGenerator($SE->processStream($Internal));
 
 	exit();
-
-	$output_line_count = 0;
-	foreach ($Cfg->inputFiles() as $in_pn)
-		$output_line_count = processOneFile($in_pn, $output_line_count+1);
 
 	$SourceMap->sourceMapHandleOutput(); }
 catch (IncludeNotFoundException $E) {
