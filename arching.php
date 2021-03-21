@@ -139,7 +139,7 @@ function output(string $str) : int {
 	static $line_nr = 0;
 	global $Cfg;
 	$Cfg->output($str);
-	$line_nr += count(explode("\n", $str)) - 1;
+	$line_nr += substr_count($str, "\n");
 	return $line_nr;
 }
 
