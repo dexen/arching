@@ -192,12 +192,18 @@ class SubstitutionEngine
 	}
 
 	protected
-	function inlineAnInclude(string $selector, string $pn, $output_line_nr) : Generator
+	function inlineAnInclude(TUStream $TUS, $output_line_nr) : Generator
 	{
 		global $SourceMap;
 
-		$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
-		yield sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
+#		$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
+		yield sprintf('# arching file require: \'%s\'; => %s ', $TUS->selector(), $TUS->resolvedPathname());
+
+		$pre = '';
+		foreach ($TUS->originalLines() as $line) {
+			yield $pre;
+			yield $line;
+			$pre = "\n"; }
 	}
 
 	protected
@@ -219,7 +225,7 @@ class SubstitutionEngine
 		foreach ($include_dirs as $dir) {
 			$pn = sprintf('%s/%s', $dir, $rpn);
 			if (file_exists($pn))
-				return yield from $this->inlineAnInclude($rpn, $pn, $output_line_nr); }
+				return yield from $this->inlineAnInclude(new TUStream(file_get_contents($pn), $rpn, $pn), $output_line_nr); }
 		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
 	}
 }
@@ -228,17 +234,21 @@ class TUStream
 {
 	protected $content_original;
 	protected $selector;
-	protected $resolved_pn;
+	protected $resolved_pathname;
 
-	function __construct(string $content_original, string $selector, string $resolved_pn = null)
+	function __construct(string $content_original, string $selector, string $resolved_pathname = null)
 	{
 		expectCorrectPhpSyntax($content_original, $selector);
 		$this->content_original = $content_original;
 		$this->selector = $selector;
-		$this->resolved_pn = $resolved_pn;
+		$this->resolved_pathname = $resolved_pathname;
 	}
 
 	function originalLines() : array { return explode("\n", $this->content_original); }
+
+	function selector() : string { return $this->selector; }
+
+	function resolvedPathname() : ?string { return $this->resolved_pathname; }
 }
 
 if (in_array($argv[1] ?? '--help', [ '-h', '--help']))
