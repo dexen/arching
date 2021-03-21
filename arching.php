@@ -162,6 +162,12 @@ class SubstitutionEngine
 	}
 
 	protected
+	function inlineArchingInput(string $selector) : string
+	{
+		return sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
+	}
+
+	protected
 	function extractRequirePathname($line) : string
 	{
 		$a = token_get_all('<?php ' .$line);
@@ -193,7 +199,7 @@ class SubstitutionEngine
 		$rpn = $this->extractRequirePathname($line);
 
 		if ($rpn === 'arching-input.php')
-			return inlineArchingInput($rpn);
+			return $this->inlineArchingInput($rpn);
 
 		if (strncmp($rpn, 'arching-', 8) === 0)
 			$include_dirs = $this->Cfg->archingIncludeDirs();
