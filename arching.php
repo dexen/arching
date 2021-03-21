@@ -143,8 +143,33 @@ class SubstitutionEngine
 		$pre = '';
 		foreach ($Stream->originalLines() as $line) {
 			yield $pre;
-			yield substituteInclude($line, -1);
+			yield $this->processOneLine($line, -1);
 			$pre = "\n"; }
+	}
+
+	protected
+	function processOneLine(string $line, int $output_line_nr) : string
+	{
+	global $Cfg;
+
+	if (!preg_match(substitutionRe(), $line))
+		return $line;
+
+	$rpn = extractRequirePathname($line);
+
+	if ($rpn === 'arching-input.php')
+		return inlineArchingInput($rpn);
+
+	if (strncmp($rpn, 'arching-', 8) === 0)
+		$include_dirs = $Cfg->archingIncludeDirs();
+	else
+		$include_dirs = $Cfg->projectIncludeDir();
+
+	foreach ($include_dirs as $dir) {
+		$pn = sprintf('%s/%s', $dir, $rpn);
+		if (file_exists($pn))
+			return inlineAnInclude($rpn, $pn, $output_line_nr); }
+	throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
 	}
 }
 
