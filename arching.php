@@ -129,6 +129,41 @@ class SourceMap
 	}
 }
 
+class SubstitutionEngine
+{
+	protected $Cfg;
+
+	function __construct(Cfg $Cfg)
+	{
+		$this->Cfg = $Cfg;
+	}
+
+	function processStream(TUStream $Stream) : Generator
+	{
+		$pre = '';
+		foreach ($Stream->originalLines() as $line) {
+			yield $pre;
+			yield substituteInclude($line, -1);
+			$pre = "\n"; }
+	}
+}
+
+class TUStream
+{
+	protected $content_original;
+	protected $selector;
+	protected $resolved_pn;
+
+	function __construct(string $content_original, string $selector, string $resolved_pn = null)
+	{
+		$this->content_original = $content_original;
+		$this->selector = $selector;
+		$this->resolved_pn = $resolved_pn;
+	}
+
+	function originalLines() : array { return explode("\n", $this->content_original); }
+}
+
 if (in_array($argv[1] ?? '--help', [ '-h', '--help']))
 	die(showHelp());
 
@@ -142,6 +177,8 @@ function output(string $str) : int {
 	$line_nr += substr_count($str, "\n");
 	return $line_nr;
 }
+
+function outputGenerator(Generator $G) { foreach ($G as $str) output($str); }
 
 function outl(...$a) { global $Cfg; foreach ($a as $str) $Cfg->output($str); $Cfg->output("\n"); }
 function outputf($fmt, ...$a) { global $Cfg; $Cfg->output(sprintf($fmt, ...$a)); }
@@ -271,6 +308,18 @@ function processOneFile(string $in_pn, int $output_line_count)
 }
 
 try {
+	$internalA = ['<?php'];
+	foreach ($Cfg->inputFiles() as $pn)
+		$internalA[] = sprintf('require %s;', var_export($pn, true));
+
+	$Internal = new TUStream(implode("\n", $internalA) ."\n", '<internal>');
+
+	$SE = new SubstitutionEngine($Cfg);
+
+	outputGenerator($SE->processStream($Internal));
+
+	exit();
+
 	$output_line_count = 0;
 	foreach ($Cfg->inputFiles() as $in_pn)
 		$output_line_count = processOneFile($in_pn, $output_line_count+1);
