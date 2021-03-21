@@ -141,7 +141,7 @@ class SubstitutionEngine
 		$pre = '';
 		foreach ($Stream->originalLines() as $line) {
 			yield $pre;
-			yield $this->processOneLine($line, -1);
+			yield from $this->processOneLine($line, -1);
 			$pre = "\n"; }
 	}
 
@@ -160,9 +160,9 @@ class SubstitutionEngine
 	}
 
 	protected
-	function inlineArchingInput(string $selector) : string
+	function inlineArchingInput(string $selector) : Generator
 	{
-		return sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
+		yield sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
 	}
 
 	protected
@@ -189,19 +189,19 @@ class SubstitutionEngine
 	}
 
 	protected
-	function inlineAnInclude(string $selector, string $pn, $output_line_nr) : string
+	function inlineAnInclude(string $selector, string $pn, $output_line_nr) : Generator
 	{
 		global $SourceMap;
 
 		$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
-		return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
+		yield sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
 	}
 
 	protected
-	function processOneLine(string $line, int $output_line_nr) : string
+	function processOneLine(string $line, int $output_line_nr) : Generator
 	{
 		if (!preg_match($this->substitutionRe(), $line))
-			return $line;
+			return yield $line;
 
 		$rpn = $this->extractRequirePathname($line);
 
@@ -216,7 +216,7 @@ class SubstitutionEngine
 		foreach ($include_dirs as $dir) {
 			$pn = sprintf('%s/%s', $dir, $rpn);
 			if (file_exists($pn))
-				return $this->inlineAnInclude($rpn, $pn, $output_line_nr); }
+				return yield from $this->inlineAnInclude($rpn, $pn, $output_line_nr); }
 		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
 	}
 }
