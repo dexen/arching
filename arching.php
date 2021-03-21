@@ -202,7 +202,7 @@ class SubstitutionEngine
 		$pre = '';
 		foreach ($TUS->originalLines() as $line) {
 			yield $pre;
-			yield $line;
+			yield from $this->processOneLine($line, -1);
 			$pre = "\n"; }
 	}
 
