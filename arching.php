@@ -231,6 +231,7 @@ class TUStream
 
 	function __construct(string $content_original, string $selector, string $resolved_pn = null)
 	{
+		expectCorrectPhpSyntax($content_original, $selector);
 		$this->content_original = $content_original;
 		$this->selector = $selector;
 		$this->resolved_pn = $resolved_pn;
