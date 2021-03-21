@@ -135,12 +135,11 @@ if (in_array($argv[1] ?? '--help', [ '-h', '--help']))
 $Cfg = new Cfg($argv);
 $SourceMap = new SourceMap($Cfg);
 
-function output(...$a) : int {
+function output(string $str) : int {
 	static $line_nr = 0;
 	global $Cfg;
-	foreach ($a as $str) {
-		$Cfg->output($str);
-		$line_nr += count(explode("\n", $str)) - 1; }
+	$Cfg->output($str);
+	$line_nr += count(explode("\n", $str)) - 1;
 	return $line_nr;
 }
 
