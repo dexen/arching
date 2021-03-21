@@ -175,9 +175,77 @@ class SubstitutionEngine
 	}
 
 	protected
+	function parsedToPattern(array $a, string $line) : array
+	{
+		$ret = [];
+
+		if ($a[0][0] === T_OPEN_TAG)
+			array_shift($a);
+		else
+			$this->onUnexpectedToken($a[0], $line);
+
+		foreach ($a as $rcd) {
+			if (is_string($rcd))
+				switch ($rcd) {
+				case ';':
+					return $ret;
+				default:
+					$this->onUnexpectedToken($rcd, $line); }
+			else
+				switch ($rcd[0]) {
+				case T_REQUIRE:
+				case T_INCLUDE:
+				case T_CONSTANT_ENCAPSED_STRING:
+					$ret[] = $rcd;
+				case T_WHITESPACE:
+					break;
+				default:
+					$this->onUnexpectedToken($rcd, $line); } }
+
+		throw new \RuntimeException(sprintf('expected end-of-statement not found (semicolon ";"), line: "%s"', $line));
+	}
+
+	protected
+	function onNoMatchingPatterns(array $aa, string $line)
+	{
+		$tA = array_map(
+			fn($rcd) => is_string($rcd) ? $rcd : token_name($rcd[0]),
+			$aa );
+		throw new \RuntimeException(sprintf('tokens don\'t match any known pattern: [%s]; line "%s"', implode(', ', $tA), $line));
+	}
+
+	protected
+	function patternMatchP(array $aa, array $pattern, int $capture)
+	{
+		$ret = true;
+
+		if (count($aa) !== count($pattern))
+			return null;
+
+		$a = array_values($aa);
+		$p = array_values($pattern);
+		foreach ($a as $n => $rcd) {
+			if ($rcd[0] !== $p[$n])
+				return null;
+			else if ($n === $capture)
+				$ret = $rcd; }
+		return $ret;
+	}
+
+	protected
 	function extractRequirePathname($line) : string
 	{
 		$a = token_get_all('<?php ' .$line);
+
+		$aa = $this->parsedToPattern($a, $line);
+
+		if ($rcd = $this->patternMatchP($aa, [T_REQUIRE, T_CONSTANT_ENCAPSED_STRING], 1))
+			return $this->interpretQuotedString($rcd[1]);
+		else if ($rcd = $this->patternMatchP($aa, [T_INCLUDE, T_CONSTANT_ENCAPSED_STRING], 1))
+			return $this->interpretQuotedString($rcd[1]);
+		else
+			$this->onNoMatchingPatterns($aa, $line);
+
 		while (($rcd = array_shift($a)) !== null) {
 			switch ($rcd[0]) {
 			case T_OPEN_TAG:
