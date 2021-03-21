@@ -185,7 +185,10 @@ class SubstitutionEngine
 				else
 					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd2[0], $rcd2[1], token_name($rcd2[0])));
 			default:
-				throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd[0], $rcd[1], token_name($rcd[0]))); } }
+				if (is_string($rcd))
+					throw new \RuntimeException(sprintf('unexpected token "%s"; line: "%s"', $rcd, $line));
+				else
+					throw new \RuntimeException(sprintf('unexpected token "%s": "%s" (%s)', $rcd[0] ??null, $rcd[1] ?? null, token_name($rcd[0]))); } }
 	}
 
 	protected
