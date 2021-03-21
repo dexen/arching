@@ -150,8 +150,6 @@ class SubstitutionEngine
 	protected
 	function processOneLine(string $line, int $output_line_nr) : string
 	{
-		global $Cfg;
-
 		if (!preg_match(substitutionRe(), $line))
 			return $line;
 
@@ -161,9 +159,9 @@ class SubstitutionEngine
 			return inlineArchingInput($rpn);
 
 		if (strncmp($rpn, 'arching-', 8) === 0)
-			$include_dirs = $Cfg->archingIncludeDirs();
+			$include_dirs = $this->Cfg->archingIncludeDirs();
 		else
-			$include_dirs = $Cfg->projectIncludeDir();
+			$include_dirs = $this->Cfg->projectIncludeDir();
 
 		foreach ($include_dirs as $dir) {
 			$pn = sprintf('%s/%s', $dir, $rpn);
