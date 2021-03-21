@@ -191,6 +191,15 @@ class SubstitutionEngine
 	}
 
 	protected
+	function inlineAnInclude(string $selector, string $pn, $output_line_nr) : string
+	{
+		global $SourceMap;
+
+		$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
+		return sprintf('# arching file require: \'%s\'; => %s ', $selector, $pn) .expectCorrectPhpSyntax(file_get_contents($pn), $pn);
+	}
+
+	protected
 	function processOneLine(string $line, int $output_line_nr) : string
 	{
 		if (!preg_match($this->substitutionRe(), $line))
@@ -209,7 +218,7 @@ class SubstitutionEngine
 		foreach ($include_dirs as $dir) {
 			$pn = sprintf('%s/%s', $dir, $rpn);
 			if (file_exists($pn))
-				return inlineAnInclude($rpn, $pn, $output_line_nr); }
+				return $this->inlineAnInclude($rpn, $pn, $output_line_nr); }
 		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
 	}
 }
