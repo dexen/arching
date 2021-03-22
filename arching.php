@@ -31,6 +31,7 @@ class Cfg
 	protected $apply_source_map_pn;
 	protected $directives_to_process = ['require'];
 	protected $include_transforms = [];
+	protected $inline_files_when = [];
 
 	function __construct(array $argv)
 	{
@@ -45,6 +46,15 @@ class Cfg
 				# --transform-include '#include "../adminer/lang/[$]LANG.inc.php";#' 'include "../adminer/lang/en.inc.php";'
 			else if ($collecting_dirs && ($arg === '--transform-include'))
 				$this->include_transforms[] = [ array_shift($a), array_shift($a) ];
+
+				# frankly this should be moved to a separate, external tool
+				# example use:
+				# --inline-files-when "#lzw_decompress[(]compile_file[(]('../adminer/static/default.css;../externals/jush/jush.css'), 'minify_css'[)][)];#"
+				# uses regular expression with capturing parentheses to extract file pathnames
+				# uses semicolon to separate file pathnames
+			else if ($collecting_dirs && ($arg === '--inline-files-when'))
+				$this->inline_files_when[] = array_shift($a);
+
 			else if ($collecting_dirs && ($arg === '--process-include'))
 				$this->directives_to_process[] = 'include';
 			else if ($collecting_dirs && ($a === '--mkrule'))
@@ -92,6 +102,8 @@ class Cfg
 	function directivesToProcess() : array { return $this->directives_to_process; }
 
 	function includeTransforms() : array { return $this->include_transforms; }
+
+	function inlineFilesWhen() : array { return $this->inline_files_when; }
 }
 
 
