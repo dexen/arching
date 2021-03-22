@@ -358,9 +358,39 @@ if (in_array($argv[1] ?? '--help', [ '-h', '--help']))
 $Cfg = new Cfg($argv);
 $SourceMap = new SourceMap($Cfg);
 
+function outputProcessing(string $string) : string
+{
+	global $Cfg;
+
+	return array_reduce(
+		$Cfg->inlineFilesWhen(),
+		function(string $str, string $reg) use($Cfg) : string
+		{
+			$matches = [];
+			preg_match($reg, $str, $matches);
+			if (empty($matches))
+				return $str;
+
+			$the_string = $matches[1];
+			$apn = interpretQuotedString($the_string);
+			$include_dirs = $Cfg->projectIncludeDir();
+
+			foreach ($include_dirs as $dir) {
+				$pn = sprintf('%s/%s', $dir, $apn);
+				if (file_exists($pn))
+					return preg_replace($reg, var_export(file_get_contents($pn), true), $str);
+				else
+					throw new \RuntimeException(sprintf('file not found to inline, selector "%s"', $apn)); }
+		},
+		$string );
+}
+
 function output(string $str) : int {
 	static $line_nr = 0;
 	global $Cfg;
+
+	$str = outputProcessing($str);
+
 	$Cfg->output($str);
 	$line_nr += substr_count($str, "\n");
 	return $line_nr;
