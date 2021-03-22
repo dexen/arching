@@ -32,6 +32,7 @@ class Cfg
 	protected $directives_to_process = ['require'];
 	protected $include_transforms = [];
 	protected $inline_files_when = [];
+	protected $inline_files_separator = ';';
 
 	function __construct(array $argv)
 	{
@@ -104,6 +105,8 @@ class Cfg
 	function includeTransforms() : array { return $this->include_transforms; }
 
 	function inlineFilesWhen() : array { return $this->inline_files_when; }
+
+	function inlineFilesSeparator() : string { return $this->inline_files_separator; }
 }
 
 
@@ -366,21 +369,24 @@ function outputProcessing(string $string) : string
 		$Cfg->inlineFilesWhen(),
 		function(string $str, string $reg) use($Cfg) : string
 		{
+			$ret = [];
+
 			$matches = [];
 			preg_match($reg, $str, $matches);
 			if (empty($matches))
 				return $str;
 
 			$the_string = $matches[1];
-			$apn = interpretQuotedString($the_string);
-			$include_dirs = $Cfg->projectIncludeDir();
+			foreach (explode($Cfg->inlineFilesSeparator(), interpretQuotedString($the_string)) as $apn) {
+				$include_dirs = $Cfg->projectIncludeDir();
 
-			foreach ($include_dirs as $dir) {
-				$pn = sprintf('%s/%s', $dir, $apn);
-				if (file_exists($pn))
-					return preg_replace($reg, var_export(file_get_contents($pn), true), $str);
-				else
-					throw new \RuntimeException(sprintf('file not found to inline, selector "%s"', $apn)); }
+				foreach ($include_dirs as $dir) {
+					$pn = sprintf('%s/%s', $dir, $apn);
+					if (file_exists($pn)) {
+						$ret[] = preg_replace($reg, var_export(file_get_contents($pn), true), $str);
+						break 2; } }
+				throw new \RuntimeException(sprintf('file not found to inline, selector "%s"', $apn)); }
+			return implode(' .', $ret);
 		},
 		$string );
 }
