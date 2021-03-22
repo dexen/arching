@@ -1,0 +1,11 @@
+#!/usr/bin/env rc
+
+flag e +
+
+if (test -e server.pid) {
+	kill -9 `{cat server.pid}
+	rm -f server.pid }
+
+./BUILD
+
+./SERVE &

@@ -1,0 +1,9 @@
+#!/usr/bin/env rc
+
+php -S localhost:9090 -t . index.php &
+
+echo $apid > server.pid
+
+wait
+
+rm -f server.pid
