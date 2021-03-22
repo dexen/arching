@@ -40,6 +40,9 @@ class Cfg
 		while (($arg = array_shift($a)) !== null) {
 			if ($collecting_dirs && ($arg === '-o'))
 				$this->output_pn = array_shift($a);
+
+				# example use:
+				# --transform-include '#include "../adminer/lang/[$]LANG.inc.php";#' 'include "../adminer/lang/en.inc.php";'
 			else if ($collecting_dirs && ($arg === '--transform-include'))
 				$this->include_transforms[] = [ array_shift($a), array_shift($a) ];
 			else if ($collecting_dirs && ($arg === '--process-include'))
