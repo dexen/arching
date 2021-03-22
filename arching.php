@@ -369,24 +369,28 @@ function outputProcessing(string $string) : string
 		$Cfg->inlineFilesWhen(),
 		function(string $str, string $reg) use($Cfg) : string
 		{
-			$ret = [];
 
-			$matches = [];
-			preg_match($reg, $str, $matches);
-			if (empty($matches))
-				return $str;
+			$CB = function($match) use($Cfg) {
+				$the_string = $match[1];
+				$datastrings = [];
 
-			$the_string = $matches[1];
-			foreach (explode($Cfg->inlineFilesSeparator(), interpretQuotedString($the_string)) as $apn) {
-				$include_dirs = $Cfg->projectIncludeDir();
+				foreach (explode($Cfg->inlineFilesSeparator(), interpretQuotedString($the_string)) as $apn) {
+#fprintf(STDERR, 'processing "%s"' .PHP_EOL, $apn);
+					$data = null;
 
-				foreach ($include_dirs as $dir) {
-					$pn = sprintf('%s/%s', $dir, $apn);
-					if (file_exists($pn)) {
-						$ret[] = preg_replace($reg, var_export(file_get_contents($pn), true), $str);
-						break 2; } }
-				throw new \RuntimeException(sprintf('file not found to inline, selector "%s"', $apn)); }
-			return implode(' .', $ret);
+					foreach ($Cfg->projectIncludeDir() as $dir) {
+						$pn = sprintf('%s/%s', $dir, $apn);
+#fprintf(STDERR, '	trying "%s"' .PHP_EOL, $pn);
+						if (file_exists($pn)) {
+							$data = file_get_contents($pn);
+							$datastrings[] = var_export($data, true);
+						break; } }
+					if ($data === null)
+						throw new \RuntimeException(sprintf('file not found to inline, selector "%s"', $apn)); }
+				return implode(' .', $datastrings);
+			};
+
+			return preg_replace_callback($reg, $CB, $str);
 		},
 		$string );
 }
