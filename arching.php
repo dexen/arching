@@ -174,12 +174,6 @@ class SubstitutionEngine
 	}
 
 	protected
-	function interpretQuotedString(string $str) : string
-	{
-		return stripcslashes(trim($str, "\"'"));
-	}
-
-	protected
 	function inlineArchingInput(string $selector) : Generator
 	{
 		yield sprintf('# arching file require: \'%s\'; => %s ', $selector, 'STDIN') .expectCorrectPhpSyntax(stream_get_contents(STDIN), 'STDIN');
@@ -273,9 +267,9 @@ class SubstitutionEngine
 		$aa = $this->parsedToPattern($a, $line);
 
 		if ($rcd = $this->patternMatchP($aa, [T_REQUIRE, T_CONSTANT_ENCAPSED_STRING], 1))
-			return $this->interpretQuotedString($rcd[1]);
+			return interpretQuotedString($rcd[1]);
 		else if ($rcd = $this->patternMatchP($aa, [T_INCLUDE, T_CONSTANT_ENCAPSED_STRING], 1))
-			return $this->interpretQuotedString($rcd[1]);
+			return interpretQuotedString($rcd[1]);
 		else
 			$this->onNoMatchingPatterns($aa, $line);
 
@@ -291,7 +285,7 @@ class SubstitutionEngine
 					$this->onUnexpectedToken($rcd2, $line);
 				$rcd3 = array_shift($a);
 				if ($rcd3[0] === T_CONSTANT_ENCAPSED_STRING)
-					return $this->interpretQuotedString($rcd3[1]);
+					return interpretQuotedString($rcd3[1]);
 				else
 					$this->onUnexpectedToken($rcd3, $line);
 			default:
@@ -373,6 +367,11 @@ function output(string $str) : int {
 }
 
 function outputGenerator(Generator $G) { foreach ($G as $str) output($str); }
+
+function interpretQuotedString(string $str) : string
+{
+	return stripcslashes(trim($str, "\"'"));
+}
 
 class SyntaxCheckError extends ParseError
 {
