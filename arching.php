@@ -158,7 +158,7 @@ class SubstitutionEngine
 	{
 		$quote = fn($str) => preg_quote($str, '/');
 
-		return '/^(' .implode('|', array_map($quote, $this->Cfg->directivesToProcess())) .')\\s+/';
+		return '/^[ 	]*(' .implode('|', array_map($quote, $this->Cfg->directivesToProcess())) .')\\s+/';
 	}
 
 	protected
