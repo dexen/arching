@@ -30,6 +30,7 @@ class Cfg
 	protected $apply_source_map;
 	protected $apply_source_map_pn;
 	protected $directives_to_process = ['require'];
+	protected $include_transforms = [];
 
 	function __construct(array $argv)
 	{
@@ -39,6 +40,8 @@ class Cfg
 		while (($arg = array_shift($a)) !== null) {
 			if ($collecting_dirs && ($arg === '-o'))
 				$this->output_pn = array_shift($a);
+			else if ($collecting_dirs && ($arg === '--transform-include'))
+				$this->include_transforms[] = [ array_shift($a), array_shift($a) ];
 			else if ($collecting_dirs && ($arg === '--process-include'))
 				$this->directives_to_process[] = 'include';
 			else if ($collecting_dirs && ($a === '--mkrule'))
@@ -84,6 +87,8 @@ class Cfg
 	function sourceMapPN() : ?string { return $this->source_map_pn; }
 
 	function directivesToProcess() : array { return $this->directives_to_process; }
+
+	function includeTransforms() : array { return $this->include_transforms; }
 }
 
 
@@ -233,8 +238,21 @@ class SubstitutionEngine
 	}
 
 	protected
+	function applyTransformations(string $line) : string
+	{
+		$ret = $line;
+
+		foreach ($this->Cfg->includeTransforms() as list($regex, $rep))
+			$ret = preg_replace($regex, $rep, $ret);
+
+		return $ret;
+	}
+
+	protected
 	function extractRequirePathname($line) : string
 	{
+		$line = $this->applyTransformations($line);
+
 		$a = token_get_all('<?php ' .$line);
 
 		$aa = $this->parsedToPattern($a, $line);
