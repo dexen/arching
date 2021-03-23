@@ -35,7 +35,7 @@ BUILD_VERSION=`{uuidgen}
 
 sed -i -r 's#href="(../adminer/static/[^"]+)"#href="<?= htmlspecialchars(ME .''file='' .rawurlencode(basename(''\1'')) .''\&version='^$BUILD_VERSION^''')?>"#g' adminer-mysql-en.php
 
-sed -i -r 's#"([.][.]/adminer/static/functions[.]js)"#ME .''file='' .basename(&)#' adminer-mysql-en.php
+sed -i -r 's#"([.][.]/adminer/static/functions[.]js)"#ME .''file='' .basename(&) .''\&version='^$BUILD_VERSION^'''#' adminer-mysql-en.php
 sed -i -r 's#"(static/editing[.]js)"#ME .''file='' .basename(&)#' adminer-mysql-en.php
 
 du -ks adminer-mysql-en.php
