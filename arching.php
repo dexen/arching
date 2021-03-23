@@ -403,7 +403,7 @@ function outputProcessing(string $string) : string
 
 					foreach (array_merge($Cfg->overrideDirs(), $Cfg->projectIncludeDirs()) as $dir) {
 						$pn = sprintf('%s/%s', $dir, $apn);
-#fprintf(STDERR, '	trying "%s"' .PHP_EOL, $pn);
+#TRACE('	trying "%s"', $pn);
 						if (file_exists($pn)) {
 							$data = file_get_contents($pn);
 							$datastrings[] = var_export($data, true);
