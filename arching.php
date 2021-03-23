@@ -311,6 +311,16 @@ class SubstitutionEngine
 	}
 
 	protected
+	function inlineAnIncludeByDirs(array $include_dirs, string $rpn)
+	{
+		foreach ($include_dirs as $dir) {
+			$pn = sprintf('%s/%s', $dir, $rpn);
+			if (file_exists($pn))
+				return yield from $this->inlineAnInclude(new TUStream(file_get_contents($pn), $rpn, $pn)); }
+		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
+	}
+
+	protected
 	function processOneLine(string $line) : Generator
 	{
 		if (!preg_match($this->substitutionRe(), $line))
@@ -322,15 +332,9 @@ class SubstitutionEngine
 			return $this->inlineArchingInput($rpn);
 
 		if (strncmp($rpn, 'arching-', 8) === 0)
-			$include_dirs = $this->Cfg->archingIncludeDirs();
+			return yield from $this->inlineAnIncludeByDirs($this->Cfg->archingIncludeDirs(), $rpn);
 		else
-			$include_dirs = $this->Cfg->projectIncludeDir();
-
-		foreach ($include_dirs as $dir) {
-			$pn = sprintf('%s/%s', $dir, $rpn);
-			if (file_exists($pn))
-				return yield from $this->inlineAnInclude(new TUStream(file_get_contents($pn), $rpn, $pn)); }
-		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
+			return yield from $this->inlineAnIncludeByDirs($this->Cfg->projectIncludeDirs(), $rpn);
 	}
 }
 
