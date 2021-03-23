@@ -41,6 +41,7 @@ class Cfg
 	protected $include_transforms = [];
 	protected $inline_files_when = [];
 	protected $inline_files_separator = ';';
+	protected $script_cwd;
 
 	function __construct(array $argv)
 	{
@@ -119,6 +120,8 @@ class Cfg
 	function inlineFilesWhen() : array { return $this->inline_files_when; }
 
 	function inlineFilesSeparator() : string { return $this->inline_files_separator; }
+
+	function scriptCwd(string $cwd = null) : string { if ($cwd !== null) $this->script_cwd = $cwd; return $this->script_cwd; }
 }
 
 
