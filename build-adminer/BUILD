@@ -25,9 +25,10 @@ arching --inline-files-when '#lzw_decompress[(]compile_file[(](.+), ''[^'']+''[)
 
 arching --process-include \
 	--transform-include '#include "../adminer/lang/[$]LANG.inc.php";#' 'include "../adminer/lang/en.inc.php";' \
-	--transform-include '#include "../adminer/file.inc.php";#' 'include "build/processed/file.inc.php";' \
-	. \
+	--transform-include '#include "../adminer/file.inc.php";#' 'include "processed/file.inc.php";' \
+	--override-dir ./build/externals \
 	$dir/adminer \
+	./build \
 	-- $dir/adminer/index.php \
 	> adminer-mysql-en.php
 
