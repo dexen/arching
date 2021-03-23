@@ -17,17 +17,10 @@ touch build/externals/jush/jush.css
 
 dir=../../adminer.git
 
-arching --inline-files-when '#lzw_decompress[(]compile_file[(](.+), ''[^'']+''[)][)]#' \
-	--override-dir ./build/externals \
-	$dir/adminer \
-	-- $dir/adminer/file.inc.php \
-	> build/processed/file.inc.php
-
 arching --process-include \
+	--inline-files-when '#lzw_decompress[(]compile_file[(](.+), ''[^'']+''[)][)]#' \
 	--transform-include '#include "../adminer/lang/[$]LANG.inc.php";#' 'include "../adminer/lang/en.inc.php";' \
-	--transform-include '#include "../adminer/file.inc.php";#' 'include "processed/file.inc.php";' \
 	--override-dir ./build/externals \
-	./build \
 	-- $dir/adminer/index.php \
 	> adminer-mysql-en.php
 
