@@ -363,11 +363,14 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		if ($rpn[0] === '/')
 			throw new \RuntimeException('unsupported: absolute pathname');
 		elseif ($rpn[0] === '.')
-			return yield from $this->inlineAnIncludeByDirs(array_merge($this->Cfg->overrideDirs(), [dirname($InputTu->resolvedPathname())]), $rpn);
+			return yield from $this->inlineAnIncludeByDirs(array_merge($this->Cfg->overrideDirs(), [$this->Cfg->scriptCwd()]), $rpn);
 		elseif (strncmp($rpn, 'arching-', 8) === 0)
 			return yield from $this->inlineAnIncludeByDirs($this->Cfg->archingIncludeDirs(), $rpn);
 		else
-			return yield from $this->inlineAnIncludeByDirs($this->Cfg->projectIncludeDirs(), $rpn);
+			return yield from $this->inlineAnIncludeByDirs(
+				array_merge($this->Cfg->overrideDirs(), $this->Cfg->projectIncludeDirs(),
+					[dirname($InputTu->resolvedPathname()),$this->Cfg->scriptCwd()] ),
+			$rpn );
 	}
 }
 
