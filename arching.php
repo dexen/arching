@@ -164,7 +164,7 @@ class SubstitutionEngine
 		$pre = '';
 		foreach ($Stream->originalLines() as $line) {
 			yield $pre;
-			yield from $this->processOneLine($line, -1);
+			yield from $this->processOneLine($line);
 			$pre = "\n"; }
 	}
 
@@ -296,7 +296,7 @@ class SubstitutionEngine
 	}
 
 	protected
-	function inlineAnInclude(TUStream $TUS, $output_line_nr) : Generator
+	function inlineAnInclude(TUStream $TUS) : Generator
 	{
 		global $SourceMap;
 
@@ -306,12 +306,12 @@ class SubstitutionEngine
 		$pre = '';
 		foreach ($TUS->originalLines() as $line) {
 			yield $pre;
-			yield from $this->processOneLine($line, -1);
+			yield from $this->processOneLine($line);
 			$pre = "\n"; }
 	}
 
 	protected
-	function processOneLine(string $line, int $output_line_nr) : Generator
+	function processOneLine(string $line) : Generator
 	{
 		if (!preg_match($this->substitutionRe(), $line))
 			return yield $line;
@@ -329,7 +329,7 @@ class SubstitutionEngine
 		foreach ($include_dirs as $dir) {
 			$pn = sprintf('%s/%s', $dir, $rpn);
 			if (file_exists($pn))
-				return yield from $this->inlineAnInclude(new TUStream(file_get_contents($pn), $rpn, $pn), $output_line_nr); }
+				return yield from $this->inlineAnInclude(new TUStream(file_get_contents($pn), $rpn, $pn)); }
 		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
 	}
 }
