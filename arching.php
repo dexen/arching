@@ -2,7 +2,7 @@
 
 function td(...$a) {
 	$L = fn($str) => fputs(STDERR, $str ."\n");
-	foreach ($a as $v) $L(var_export($v, true)); die('td()'); }
+	foreach ($a as $v) $L(var_export($v, true)); $L('td()'); die(1); }
 function tp(...$a) { foreach ($a as $v) var_export($v); echo('tp()'); return $a[0]??null; }
 
 function showHelp()
