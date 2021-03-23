@@ -90,7 +90,7 @@ class Cfg
 
 	function archingIncludeDirs() : array { return [ sprintf('%s/%s', __DIR__, 'includes') ]; }
 
-	function projectIncludeDir() : array { return $this->project_include_dirs; }
+	function projectIncludeDirs() : array { return $this->project_include_dirs; }
 
 	function inputFiles() : array { return $this->input_files; }
 
@@ -378,7 +378,7 @@ function outputProcessing(string $string) : string
 #fprintf(STDERR, 'processing "%s"' .PHP_EOL, $apn);
 					$data = null;
 
-					foreach ($Cfg->projectIncludeDir() as $dir) {
+					foreach ($Cfg->projectIncludeDirs() as $dir) {
 						$pn = sprintf('%s/%s', $dir, $apn);
 #fprintf(STDERR, '	trying "%s"' .PHP_EOL, $pn);
 						if (file_exists($pn)) {
@@ -470,6 +470,6 @@ catch (IncludeNotFoundException $E) {
 	$L('Include path:');
 	foreach ($Cfg->archingIncludeDirs() as $pn)
 		$L('	%s', $pn);
-	foreach ($Cfg->projectIncludeDir() as $pn)
+	foreach ($Cfg->projectIncludeDirs() as $pn)
 		$L('	%s', $pn);
 	die(1); }
