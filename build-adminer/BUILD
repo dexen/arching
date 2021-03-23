@@ -18,7 +18,7 @@ touch build/externals/jush/jush.css
 dir=../../adminer.git
 
 arching --inline-files-when '#lzw_decompress[(]compile_file[(](.+), ''[^'']+''[)][)]#' \
-	./build/externals \
+	--override-dir ./build/externals \
 	$dir/adminer \
 	-- $dir/adminer/file.inc.php \
 	> build/processed/file.inc.php
