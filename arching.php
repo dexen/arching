@@ -494,8 +494,8 @@ try {
 
 	foreach ($Cfg->inputFiles() as $pn) {
 		$Cfg->scriptCwd(dirname($pn));
-		$line = sprintf('require %s;', var_export($pn, true));
-		outputGenerator($SE->processStream(new TUStream($line, $pn, $Cfg->scriptCwd())));
+		$line = sprintf('require %s;', var_export(basename($pn), true));
+		outputGenerator($SE->processStream(new TUStream($line, $pn)));
 	}
 
 	exit();
