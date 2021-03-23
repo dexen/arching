@@ -27,6 +27,7 @@ class IncludeNotFoundException extends ProcessingFailedException {}
 class Cfg
 {
 	protected $argv;
+	protected $override_dirs = [];
 	protected $project_include_dirs = [];
 	protected $input_files = [];
 	protected $output_pn = '/dev/stdout';
@@ -65,6 +66,8 @@ class Cfg
 
 			else if ($collecting_dirs && ($arg === '--process-include'))
 				$this->directives_to_process[] = 'include';
+			else if ($collecting_dirs && ($arg === '--override-dir'))
+				$this->override_dirs[] = array_shift($a);
 			else if ($collecting_dirs && ($a === '--mkrule'))
 				$this->mkrule_pn = array_shift($a);
 			else if ($collecting_dirs && is_dir($arg))
@@ -96,6 +99,8 @@ class Cfg
 	function output(string $str) { fwrite($this->output_h, $str); }
 
 	function archingIncludeDirs() : array { return [ sprintf('%s/%s', __DIR__, 'includes') ]; }
+
+	function overrideDirs() : array { return $this->override_dirs; }
 
 	function projectIncludeDirs() : array { return $this->project_include_dirs; }
 
