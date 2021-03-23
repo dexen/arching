@@ -9,7 +9,7 @@ if not
 
 for (d in $a) {
 	if (test -d $d) {
-		if (php ../arching.php . -- $d/default.php | diff -u $d/expected.txt - > /dev/null)
+		if (php ../arching.php . -- $d/default.php >[2=1] | diff -u $d/expected.txt - >/dev/null)
 			echo -n .
 		if not {
 			echo '	# testing ' $d
