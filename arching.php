@@ -164,7 +164,7 @@ class SubstitutionEngine
 		$pre = '';
 		foreach ($Stream->originalLines() as $line) {
 			yield $pre;
-			yield from $this->processOneLine($line);
+			yield from $this->processOneLine($Stream, $line);
 			$pre = "\n"; }
 	}
 
@@ -306,7 +306,7 @@ class SubstitutionEngine
 		$pre = '';
 		foreach ($TUS->originalLines() as $line) {
 			yield $pre;
-			yield from $this->processOneLine($line);
+			yield from $this->processOneLine($TUS, $line);
 			$pre = "\n"; }
 	}
 
@@ -321,7 +321,7 @@ class SubstitutionEngine
 	}
 
 	protected
-	function processOneLine(string $line) : Generator
+	function processOneLine(TUStream $InputTus, string $line) : Generator
 	{
 		if (!preg_match($this->substitutionRe(), $line))
 			return yield $line;
