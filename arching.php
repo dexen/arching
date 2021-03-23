@@ -324,7 +324,7 @@ class SubstitutionEngine
 	}
 
 	protected
-	function processOneLine(TUStream $InputTus, string $line) : Generator
+	function processOneLine(TUStream $InputTu, string $line) : Generator
 	{
 		if (!preg_match($this->substitutionRe(), $line))
 			return yield $line;
