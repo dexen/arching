@@ -475,15 +475,14 @@ function applySourceMap(string $content) : string
 }
 
 try {
-	$internalA = ['<?php'];
-	foreach ($Cfg->inputFiles() as $pn)
-		$internalA[] = sprintf('require %s;', var_export($pn, true));
-
-	$Internal = new TUStream(implode("\n", $internalA), '<internal>', '.');
-
 	$SE = new SubstitutionEngine($Cfg);
+	output("<?php\n");
 
-	outputGenerator($SE->processStream($Internal));
+	foreach ($Cfg->inputFiles() as $pn) {
+		$Cfg->scriptCwd(dirname($pn));
+		$line = sprintf('require %s;', var_export($pn, true));
+		outputGenerator($SE->processStream(new TUStream($line, $pn, $Cfg->scriptCwd())));
+	}
 
 	exit();
 
