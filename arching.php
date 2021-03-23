@@ -5,6 +5,13 @@ function td(...$a) {
 	foreach ($a as $v) $L(var_export($v, true)); $L('td()'); die(1); }
 function tp(...$a) { foreach ($a as $v) var_export($v); echo('tp()'); return $a[0]??null; }
 
+function TRACE(string $str, ...$a) {
+	if (count($a))
+		$str = sprintf($str, ...$a);
+	fputs(STDERR, $str);
+	fputs(STDERR, "\n");
+}
+
 function showHelp()
 {
 	echo "arching: package a PHP application into one file\n";
