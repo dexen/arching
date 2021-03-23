@@ -6,6 +6,11 @@ function td(...$a) {
 function tp(...$a) { foreach ($a as $v) var_export($v); echo('tp()'); return $a[0]??null; }
 
 function TRACE(string $str, ...$a) {
+	global $Cfg;
+
+	if (!$Cfg->traceP())
+		return;
+
 	if (count($a))
 		$str = sprintf($str, ...$a);
 	fputs(STDERR, $str);
@@ -42,6 +47,7 @@ class Cfg
 	protected $inline_files_when = [];
 	protected $inline_files_separator = ';';
 	protected $script_cwd;
+	protected $trace = false;
 
 	function __construct(array $argv)
 	{
@@ -78,6 +84,8 @@ class Cfg
 			else if ($collecting_dirs && ($arg === '--apply-source-map')) {
 				$this->apply_source_map_pn = array_shift($a);
 				$this->apply_source_map = file_get_contents($this->apply_source_map_pn); }
+			else if ($collecting_dirs && ($arg === '--trace'))
+				$this->trace = true;
 			else if ($arg === '--')
 				$collecting_dirs = false;
 			else if (is_file($arg)) {
@@ -122,6 +130,8 @@ class Cfg
 	function inlineFilesSeparator() : string { return $this->inline_files_separator; }
 
 	function scriptCwd(string $cwd = null) : string { if ($cwd !== null) $this->script_cwd = $cwd; return $this->script_cwd; }
+
+	function traceP() : bool { return $this->trace; }
 }
 
 
