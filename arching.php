@@ -337,7 +337,7 @@ class SubstitutionEngine
 		if ($rpn[0] === '/')
 			throw new \RuntimeException('unsupported: absolute pathname');
 		elseif ($rpn[0] === '.')
-			return yield from $this->inlineAnIncludeByDirs(['.'], $rpn);
+			return yield from $this->inlineAnIncludeByDirs([dirname($InputTu->resolvedPathname())], $rpn);
 		elseif (strncmp($rpn, 'arching-', 8) === 0)
 			return yield from $this->inlineAnIncludeByDirs($this->Cfg->archingIncludeDirs(), $rpn);
 		else
@@ -464,7 +464,7 @@ try {
 	foreach ($Cfg->inputFiles() as $pn)
 		$internalA[] = sprintf('require %s;', var_export($pn, true));
 
-	$Internal = new TUStream(implode("\n", $internalA), '<internal>');
+	$Internal = new TUStream(implode("\n", $internalA), '<internal>', '.');
 
 	$SE = new SubstitutionEngine($Cfg);
 
