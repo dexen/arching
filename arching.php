@@ -418,7 +418,7 @@ function outputProcessing(string $string) : string
 #fprintf(STDERR, 'processing "%s"' .PHP_EOL, $apn);
 					$data = null;
 
-					foreach (array_merge($Cfg->overrideDirs(), $Cfg->projectIncludeDirs()) as $dir) {
+					foreach (array_merge($Cfg->overrideDirs(), [$Cfg->scriptCwd()]) as $dir) {
 						$pn = sprintf('%s/%s', $dir, $apn);
 #TRACE('	trying "%s"', $pn);
 						if (file_exists($pn)) {
