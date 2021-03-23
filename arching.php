@@ -453,7 +453,7 @@ try {
 	foreach ($Cfg->inputFiles() as $pn)
 		$internalA[] = sprintf('require %s;', var_export($pn, true));
 
-	$Internal = new TUStream(implode("\n", $internalA) ."\n", '<internal>');
+	$Internal = new TUStream(implode("\n", $internalA), '<internal>');
 
 	$SE = new SubstitutionEngine($Cfg);
 
