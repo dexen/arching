@@ -343,6 +343,7 @@ class SubstitutionEngine
 				$pn = $rpn;
 			else
 				$pn = sprintf('%s/%s', $dir, $rpn);
+TRACE('%% trying %s -> %s', $rpn, $pn);
 			if (file_exists($pn))
 				return yield from $this->inlineAnInclude(new TUStream(file_get_contents($pn), $rpn, $pn)); }
 		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
