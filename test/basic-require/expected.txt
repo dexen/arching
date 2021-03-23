@@ -1,5 +1,5 @@
 <?php
-# arching file require: './basic-require/default.php'; => ./basic-require/default.php <?php
+# arching file require: 'default.php'; => ./basic-require/default.php <?php
 
 echo 'aaa';
 

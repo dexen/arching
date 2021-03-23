@@ -1,4 +1,4 @@
 <?php
-# arching file require: './basic-use/default.php'; => ./basic-use/default.php <?php
+# arching file require: 'default.php'; => ./basic/default.php <?php
 
 echo 'foobar';
