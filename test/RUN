@@ -1,0 +1,20 @@
+#!/usr/bin/env rc
+
+flag e +
+
+if (~ $* '')
+	a=*
+if not
+	a=$*
+
+for (d in $a) {
+	if (test -d $d) {
+		if (php ../arching.php . -- $d/default.php | diff -u $d/expected.txt - > /dev/null)
+			echo -n .
+		if not {
+			echo '	# testing ' $d
+			php ../arching.php . -- $d/default.php | diff -u $d/expected.txt -
+		}
+	}
+}
+echo
