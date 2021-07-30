@@ -358,7 +358,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		$rpn = $this->extractRequirePathname($line);
 
 		if ($rpn === 'arching-input.php')
-			return $this->inlineArchingInput($rpn);
+			return yield from $this->inlineArchingInput($rpn);
 
 		if ($rpn[0] === '/')
 			throw new \RuntimeException('unsupported: absolute pathname');
