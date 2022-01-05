@@ -4,8 +4,12 @@ flag e +
 
 if (~ $* '')
 	a=*
-if not
+if not {
 	a=$*
+	for (d in $a)
+		if ( ! test -d $d) {
+			echo Argument directory not found: $d
+			exit 2 } }
 
 for (d in $a) {
 	if (test -d $d) {
