@@ -17,13 +17,14 @@ for (d in $a) {
 			true
 		if not {
 			echo '	# testing ' $d with ./$d/default.php
-			php ../arching.php -- ./$d/default.php | php -l }
+			php ../arching.php -- ./$d/default.php | php -l
+			exit 1 }
 		if (php ../arching.php . -- ./$d/default.php >[2=1] | diff -u $d/expected.txt - >/dev/null)
 			true
 		if not {
 			echo '	# testing ' $d with ./$d/default.php
 			php ../arching.php -- ./$d/default.php | diff -u $d/expected.txt -
-		}
+			exit 1 }
 		echo -n .
 	}
 }
