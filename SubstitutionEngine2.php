@@ -10,12 +10,12 @@ class SubstitutionEngine2
 	}
 
 	protected
-	function unexpectedTokenException($token)
+	function unexpectedTokenException($token, $extra = null)
 	{
 		if (is_array($token))
-			throw new \Exception(sprintf('unexpected token %s: "%s"', token_name($token[0]), $token[1]));
+			throw new \Exception(sprintf('unexpected token %s: "%s" ' .$extra, token_name($token[0]), $token[1]));
 		else
-			throw new \Exception(sprintf('unexpected token: "%s"', $token));
+			throw new \Exception(sprintf('unexpected token: "%s" ' .$extra, $token));
 	}
 
 	protected
@@ -91,13 +91,28 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		if ($encoded[0] === '\'')
 			return stripslashes(
 				substr($encoded, 1, strlen($encoded)-2) );
-		throw new \Exception('unsupported case: not a single-quoted string');
+		throw new \Exception(sprintf('unsupported case: not a single-quoted string: "%s"', $encoded));
 	}
 
 	protected
-	function processRequireConstString(TUStream $InputTu, array $tex) : \Generator
+	function inlineAnInclude(TUStream $TUS) : \Generator
 	{
-		$rpn = $this->constStringParse($tex[1][1]);
+		global $SourceMap;
+
+#		$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
+		yield sprintf('# arching file require: \'%s\'; => %s ', $TUS->selector(), $TUS->resolvedPathname());
+
+		foreach ($this->statements(token_get_all($TUS->originalContent(), TOKEN_PARSE)) as $statement)
+			yield from $this->processOneStatement($TUS, $statement);
+	}
+
+	protected
+	function processRequireConstString(TUStream $InputTu, array $statement, array $ex) : \Generator
+	{
+		if (count($ex) === 1)
+			$rpn = $this->constStringParse($ex[0][1]);
+		else
+			throw new \Exception('not supported yet: string concatenation etc.');
 
 		if ($rpn === 'arching-input.php')
 			return yield from $this->inlineArchinInput($rpn);
@@ -115,30 +130,64 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 			$rpn );
 	}
 
-	function processStream(TUStream $Stream) : \Generator
+	protected
+	function statements(array $a) : array
 	{
-		$a = token_get_all($Stream->originalContent(), TOKEN_PARSE);
-		for ($n = 0; $n < count($a); ++$n) {
-			$token = $a[$n];
+		$ret = [];
+		$st = [];
+		foreach ($a as $token) {
+			if (is_array($token))
+				$ttype = $token[0];
+			else
+				$ttype = $token;
 
-			switch ($token[0]) {
-			case T_REQUIRE:
-				$nn = 1;
-				$ex = $this->expressionOf($a, $n+1);
-				$tex = $ex;
-				array_unshift($tex, $token);
-				if ($this->constStringP($ex))
-					yield from $this->processRequireConstString($Stream, $tex);
-				else
-					throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
-						$this->expressionToString($tex) ));
-				break;
+			switch ($ttype) {
 			case T_OPEN_TAG:
-				yield $token[1];
+				if ($st !== [])
+					$this->unexpectedTokenException($token, 'inside statement');
+				$st[] = $token;
+				$ret[] = $st;
+				$st = [];
+				break;
+			case ';':
+				$st[] = $token;
+				$ret[] = $st;
+				$st = [];
 				break;
 			default:
-td(compact('token'));
-			}
-		}
+				$st[] = $token; } }
+		if ($st)
+			$ret[] = $st;
+		return $ret;
+	}
+
+	function processOneStatement(TUStream $InputTu, array $statement) : \Generator
+	{
+		if (is_array($statement[0]))
+			$ttype = $statement[0][0];
+		else
+			$ttype = $statement[0];
+
+		switch ($ttype) {
+		case T_OPEN_TAG:
+		default:
+			yield from $statement;
+			break;
+		case T_INCLUDE:
+			throw new \Exception('unsupported case: an include');
+		case T_REQUIRE:
+			$ex = $this->expressionOf($statement, 1);
+			if ($this->constStringP($ex))
+				yield from $this->processRequireConstString($InputTu, $statement, $ex);
+			else
+				throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
+					$this->expressionToString($statement) ));
+			break; }
+	}
+
+	function processStream(TUStream $Stream) : \Generator
+	{
+		foreach ($this->statements(token_get_all($Stream->originalContent(), TOKEN_PARSE)) as $statement)
+			yield from $this->processOneStatement($Stream, $statement);
 	}
 }

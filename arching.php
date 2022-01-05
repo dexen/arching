@@ -252,7 +252,15 @@ function output(string $str) : int {
 	return $line_nr;
 }
 
-function outputGenerator(Generator $G) { foreach ($G as $str) output($str); }
+function outputGenerator(Generator $G) {
+	foreach ($G as $token)
+		if (is_string($token))
+			output($token);
+		else if (is_array($token))
+			output($token[1]);
+		else
+			throw new \Exception('token neither string nor array');
+}
 
 function interpretQuotedString(string $str) : string
 {
