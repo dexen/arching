@@ -176,6 +176,7 @@ class SourceMap
 }
 
 require __DIR__ .'/' .'SubstitutionEngine.php';
+require __DIR__ .'/' .'SubstitutionEngine2.php';
 
 class TUStream
 {
@@ -190,6 +191,8 @@ class TUStream
 		$this->selector = $selector;
 		$this->resolved_pathname = $resolved_pathname;
 	}
+
+	function originalContent() : string { return $this->content_original; }
 
 	function originalLines() : array { return explode("\n", $this->content_original); }
 
@@ -292,12 +295,18 @@ function applySourceMap(string $content) : string
 }
 
 try {
-	$SE = new SubstitutionEngine($Cfg);
-	output("<?php\n");
+	$SE = new SubstitutionEngine2($Cfg);
+	if ($SE instanceof SubstitutionEngine2)
+		true;
+	else
+		output("<?php\n");
 
 	foreach ($Cfg->inputFiles() as $pn) {
 		$Cfg->scriptCwd(dirname($pn));
-		$line = sprintf('require %s;', var_export(basename($pn), true));
+		if ($SE instanceof SubstitutionEngine2)
+			$line = sprintf("<?php\nrequire %s;", var_export(basename($pn), true));
+		else
+			$line = sprintf('require %s;', var_export(basename($pn), true));
 		outputGenerator($SE->processStream(new TUStream($line, $pn)));
 	}
 
