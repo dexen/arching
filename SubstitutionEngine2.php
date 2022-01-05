@@ -71,6 +71,50 @@ class SubstitutionEngine2
 		return implode(array_map(fn($t)=>is_array($t)?$t[1]:$t, $tokens));
 	}
 
+	protected
+	function inlineAnIncludeByDirs(array $include_dirs, string $rpn)
+	{
+		foreach ($include_dirs as $dir) {
+			if ($dir === '.')
+				$pn = $rpn;
+			else
+				$pn = sprintf('%s/%s', $dir, $rpn);
+TRACE('%% trying %s -> %s', $rpn, $pn);
+			if (file_exists($pn))
+				return yield from $this->inlineAnInclude(new TUStream(file_get_contents($pn), $rpn, $pn)); }
+		throw new IncludeNotFoundException(sprintf('include file not found for "%s"', $rpn));
+	}
+
+	protected
+	function constStringParse(string $encoded) : string
+	{
+		if ($encoded[0] === '\'')
+			return stripslashes(
+				substr($encoded, 1, strlen($encoded)-2) );
+		throw new \Exception('unsupported case: not a single-quoted string');
+	}
+
+	protected
+	function processRequireConstString(TUStream $InputTu, array $tex) : \Generator
+	{
+		$rpn = $this->constStringParse($tex[1][1]);
+
+		if ($rpn === 'arching-input.php')
+			return yield from $this->inlineArchinInput($rpn);
+
+		if ($rpn[0] === '/')
+			throw new \RuntimeException('unsupported: absolute pathname');
+		elseif ($rpn[0] === '.')
+			return yield from $this->inlineAnIncludeByDirs(array_merge($this->Cfg->overrideDirs(), [$this->Cfg->scriptCwd()]), $rpn);
+		elseif (strncmp($rpn, 'arching-', 8) === 0)
+			return yield from $this->inlineAnIncludeByDirs($this->Cfg->archingIncludeDirs(), $rpn);
+		else
+			return yield from $this->inlineAnIncludeByDirs(
+				array_merge($this->Cfg->overrideDirs(), $this->Cfg->projectIncludeDirs(),
+					[dirname($InputTu->resolvedPathname()),$this->Cfg->scriptCwd()] ),
+			$rpn );
+	}
+
 	function processStream(TUStream $Stream) : \Generator
 	{
 		$a = token_get_all($Stream->originalContent(), TOKEN_PARSE);
