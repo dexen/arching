@@ -9,17 +9,18 @@ if not
 
 for (d in $a) {
 	if (test -d $d) {
-		if (php ../arching.php . -- ./$d/default.php >[2=1] | diff -u $d/expected.txt - >/dev/null)
-			echo -n .
-		if not {
-			echo '	# testing ' $d with ./$d/default.php
-			php ../arching.php -- ./$d/default.php | diff -u $d/expected.txt -
-		}
 		if (php ../arching.php -- ./$d/default.php | php -l >[1]/dev/null >[2]/dev/null)
 			true
 		if not {
 			echo '	# testing ' $d with ./$d/default.php
 			php ../arching.php -- ./$d/default.php | php -l }
+		if (php ../arching.php . -- ./$d/default.php >[2=1] | diff -u $d/expected.txt - >/dev/null)
+			true
+		if not {
+			echo '	# testing ' $d with ./$d/default.php
+			php ../arching.php -- ./$d/default.php | diff -u $d/expected.txt -
+		}
+		echo -n .
 	}
 }
 echo
