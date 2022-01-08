@@ -1,0 +1,17 @@
+<?php
+# arching file require: 'default.php'; => ./namespace-anonymous/default.php <?php
+
+namespace {
+
+function aabb()
+{
+	return 4;
+}
+
+echo 'foo bar';
+
+?>
+foo bar baz
+aa bb
+<?php
+}

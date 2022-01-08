@@ -47,6 +47,19 @@ class SubstitutionEngine2
 	}
 
 	protected
+	function statementTypeP(array $statement, $type) : bool
+	{
+		foreach ($statement as $token)
+			if ($this->tokenTypeP($token, $type))
+				return true;
+			else if ($this->tokenTypeP($token, T_WHITESPACE))
+				continue;
+			else
+				break;
+		return false;
+	}
+
+	protected
 	function tokenTypeP($token, $type) : bool
 	{
 		if (is_array($token))
@@ -95,6 +108,26 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 	}
 
 	protected
+	function processStreamOfStatements(array $G) : array
+	{
+		$ret = [];
+		$anonymousOpened = false;
+		foreach ($G as $statement)
+			if ($anonymousOpened)
+				$ret[] = $statement;
+			else if ($this->tokenTypeP($statement[0], T_OPEN_TAG)) {
+				$ret[] = $statement;
+				$ret[] = [ "\n", $this->genTokenNamespaceOpen(), "\n" ];
+				$anonymousOpened = true; }
+		if ($this->statementTypeP($ret[count($ret)-1], T_CLOSE_TAG))
+			$ret[] = [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
+		else
+			$ret[] = [ "\n", $this->genTokenNamespaceClose(), "\n" ];
+
+		return $ret;
+	}
+
+	protected
 	function inlineAnInclude(TUStream $TUS) : \Generator
 	{
 		global $SourceMap;
@@ -102,7 +135,10 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 #		$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
 		yield sprintf('# arching file require: \'%s\'; => %s ', $TUS->selector(), $TUS->resolvedPathname());
 
-		foreach ($this->statements(token_get_all($TUS->originalContent(), TOKEN_PARSE)) as $statement)
+		foreach (
+			$this->processStreamOfStatements(
+				$this->statements(token_get_all(
+					$TUS->originalContent(), TOKEN_PARSE) ) ) as $statement)
 			yield from $this->processOneStatement($TUS, $statement);
 	}
 
@@ -183,6 +219,16 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 				throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
 					$this->expressionToString($statement) ));
 			break; }
+	}
+
+	function genTokenNamespaceOpen()
+	{
+		return "namespace {";
+	}
+
+	function genTokenNamespaceClose()
+	{
+		return "}";
 	}
 
 	function processStream(TUStream $Stream) : \Generator
