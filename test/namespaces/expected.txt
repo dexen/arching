@@ -1,0 +1,16 @@
+<?php
+# arching file require: 'default.php'; => ./namespaces/default.php <?php
+
+function Aaa() { return 2; }
+
+Aaa();
+
+# arching file require: 'extra1.php'; => ./namespaces/extra1.php <?php
+
+namespace Foo;
+
+function FooAaa() { return 33; }
+
+
+Aaa();
+FooAaa();
