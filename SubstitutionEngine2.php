@@ -59,7 +59,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 
 		if ($anonymousOpened) {
 			if ($this->statementTypeP($statement, T_CLOSE_TAG))
-			yield [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
+				yield [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
 			else
 				yield [ "\n", $this->genTokenNamespaceClose(), "\n" ]; }
 	}
