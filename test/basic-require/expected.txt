@@ -1,22 +1,19 @@
 <?php
 # arching file require: 'default.php'; => ./basic-require/default.php <?php
 
-namespace {
-
 echo 'aaa';
 
 # arching file require: './extra.php'; => ./basic-require/./extra.php <?php
 
-echo 'foobar';
+echo 'in extra.php';
 
 
 # arching file require: './extra2.php'; => ./basic-require/./extra2.php <?php
 
-echo "extra2.php\n";
+echo "in extra2.php\n";
 
 
 # arching file require: './extra3.php'; => ./basic-require/./extra3.php <?php
 
-echo "extra3.php\n";
+echo "IN IN extra3.php\n";
 
-}

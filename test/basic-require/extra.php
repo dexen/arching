@@ -1,3 +1,3 @@
 <?php
 
-echo 'foobar';
+echo 'in extra.php';

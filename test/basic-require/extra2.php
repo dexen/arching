@@ -1,3 +1,3 @@
 <?php
 
-echo "extra2.php\n";
+echo "in extra2.php\n";
