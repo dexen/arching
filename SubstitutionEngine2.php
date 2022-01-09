@@ -68,7 +68,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 				$Stream,
 				$this->statements(
 					token_get_all($Stream->originalContent(), TOKEN_PARSE) ) ) as $statement)
-			yield from $statement;
+			yield $statement;
 	}
 
 	protected
