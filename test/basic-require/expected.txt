@@ -1,6 +1,8 @@
 <?php
 # arching file require: 'default.php'; => ./basic-require/default.php <?php
 
+namespace {
+
 echo 'aaa';
 
 # arching file require: './extra.php'; => ./basic-require/./extra.php <?php
@@ -17,3 +19,4 @@ echo "extra2.php\n";
 
 echo "extra3.php\n";
 
+}

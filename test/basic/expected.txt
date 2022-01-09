@@ -1,4 +1,8 @@
 <?php
 # arching file require: 'default.php'; => ./basic/default.php <?php
 
+namespace {
+
 echo 'foobar';
+
+}
