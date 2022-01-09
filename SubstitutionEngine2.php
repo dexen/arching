@@ -3,6 +3,8 @@
 class SubstitutionEngine2
 {
 	use SE2Extras;
+	protected $namespaceOpen;
+	const NAMESPACE_ANONYMOUS = -1;
 
 	protected $Cfg;
 
@@ -30,10 +32,12 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 	{
 		$ret = [];
 		$anonymousOpened = false;
+
 		foreach ($G as $statement)
-			if (( ! $anonymousOpened) && $this->tokenTypeP($statement[0], T_OPEN_TAG)) {
+			if (($this->namespaceOpen === null) && $this->tokenTypeP($statement[0], T_OPEN_TAG)) {
 				yield $statement;
 				yield [ "\n", $this->genTokenNamespaceOpen(), "\n" ];
+				$this->namespaceOpen = static::NAMESPACE_ANONYMOUS;
 				$anonymousOpened = true; }
 			else if ($this->statementTypeP($statement, T_INCLUDE)) {
 				$ex = $this->expressionOf($statement, 1);
@@ -52,10 +56,12 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 						$this->expressionToString($statement) )); }
 			else
 				yield $statement;
-		if ($this->statementTypeP($statement, T_CLOSE_TAG))
+
+		if ($anonymousOpened) {
+			if ($this->statementTypeP($statement, T_CLOSE_TAG))
 			yield [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
-		else
-			yield [ "\n", $this->genTokenNamespaceClose(), "\n" ];
+			else
+				yield [ "\n", $this->genTokenNamespaceClose(), "\n" ]; }
 	}
 
 	protected
