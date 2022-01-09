@@ -26,23 +26,36 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 	}
 
 	protected
-	function processStreamOfStatements(array $G) : array
+	function processStreamOfStatements(TUStream $InputTu, array $G) : Generator
 	{
 		$ret = [];
 		$anonymousOpened = false;
 		foreach ($G as $statement)
-			if ($anonymousOpened)
-				$ret[] = $statement;
+			yield $statement;
+/*
+			if ($anonymousOpened) {
+				if ($this->statementTypeP($statement, T_INCLUDE))
+					throw new \Exception('unsupported case: an include');
+				else if ($this->statementTypeP($statement, T_REQUIRE)) {
+					$ex = $this->expressionOf($statement, 1);
+						if ($this->constStringP($ex))
+							yield from $this->processRequireConstString($InputTu, $statement, $ex);
+						else
+							throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
+						$this->expressionToString($statement) )); }
+				else
+					yield $statement; }
 			else if ($this->tokenTypeP($statement[0], T_OPEN_TAG)) {
-				$ret[] = $statement;
-				$ret[] = [ "\n", $this->genTokenNamespaceOpen(), "\n" ];
+				yield $statement;
+				yield [ "\n", $this->genTokenNamespaceOpen(), "\n" ];
 				$anonymousOpened = true; }
-		if ($this->statementTypeP($ret[count($ret)-1], T_CLOSE_TAG))
-			$ret[] = [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
+			else
+				yield $statement;
+		if ($this->statementTypeP($statement, T_CLOSE_TAG))
+			yield [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
 		else
-			$ret[] = [ "\n", $this->genTokenNamespaceClose(), "\n" ];
-
-		return $ret;
+			yield [ "\n", $this->genTokenNamespaceClose(), "\n" ];
+*/
 	}
 
 	protected
@@ -50,13 +63,14 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 	{
 		global $SourceMap;
 
-		yield sprintf('# arching file require: \'%s\'; => %s ', $TUS->selector(), $TUS->resolvedPathname());
+		yield [ sprintf('# arching file require: \'%s\'; => %s ', $TUS->selector(), $TUS->resolvedPathname()) ];
 
 		foreach (
 			$this->processStreamOfStatements(
+				$TUS,
 				$this->statements(token_get_all(
 					$TUS->originalContent(), TOKEN_PARSE) ) ) as $statement)
-			yield from $this->processOneStatement($TUS, $statement);
+			yield from $statement;
 	}
 
 	protected
@@ -114,28 +128,12 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		return $ret;
 	}
 
-	function processOneStatement(TUStream $InputTu, array $statement) : \Generator
-	{
-		switch ($this->statementType($statement)) {
-		case T_OPEN_TAG:
-		default:
-			yield from $statement;
-			break;
-		case T_INCLUDE:
-			throw new \Exception('unsupported case: an include');
-		case T_REQUIRE:
-			$ex = $this->expressionOf($statement, 1);
-			if ($this->constStringP($ex))
-				yield from $this->processRequireConstString($InputTu, $statement, $ex);
-			else
-				throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
-					$this->expressionToString($statement) ));
-			break; }
-	}
-
 	function processStream(TUStream $Stream) : \Generator
 	{
-		foreach ($this->statements(token_get_all($Stream->originalContent(), TOKEN_PARSE)) as $statement)
-			yield from $this->processOneStatement($Stream, $statement);
+		foreach (
+			$this->processStreamOfStatements(
+				$Stream,
+				$this->statements(token_get_all($Stream->originalContent(), TOKEN_PARSE) ) ) as $statement)
+			yield from $statement;
 	}
 }
