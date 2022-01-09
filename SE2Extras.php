@@ -61,6 +61,12 @@ trait SE2Extras
 	protected
 	function tokenTypeP($token, $type) : bool
 	{
+		if (is_array($type)) {
+			if (is_array($token))
+				return in_array($token[0], $type, true);
+			else
+				return in_array($token, $type, true); }
+
 		if (is_array($token))
 			return $token[0] === $type;
 		else
