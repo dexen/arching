@@ -1,7 +1,7 @@
 <?php
-# arching file require: 'default.php'; => ./basic/default.php <?php
 
 namespace {
+# arching file require: 'default.php'; => ./basic/default.php <?php
 
 echo 'foobar';
 

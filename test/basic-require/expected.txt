@@ -1,4 +1,6 @@
 <?php
+
+namespace {
 # arching file require: 'default.php'; => ./basic-require/default.php <?php
 
 echo 'aaa';
@@ -17,3 +19,5 @@ echo "in extra2.php\n";
 
 echo "IN IN extra3.php\n";
 
+
+}
