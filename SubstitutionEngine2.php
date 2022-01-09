@@ -59,17 +59,15 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 	}
 
 	protected
-	function inlineAnInclude(TUStream $TUS) : \Generator
+	function inlineAnInclude(TUStream $Stream) : \Generator
 	{
-		global $SourceMap;
-
-		yield [ sprintf('# arching file require: \'%s\'; => %s ', $TUS->selector(), $TUS->resolvedPathname()) ];
+		yield [ sprintf('# arching file require: \'%s\'; => %s ', $Stream->selector(), $Stream->resolvedPathname()) ];
 
 		foreach (
 			$this->processStreamOfStatements(
-				$TUS,
-				$this->statements(token_get_all(
-					$TUS->originalContent(), TOKEN_PARSE) ) ) as $statement)
+				$Stream,
+				$this->statements(
+					token_get_all($Stream->originalContent(), TOKEN_PARSE) ) ) as $statement)
 			yield from $statement;
 	}
 
@@ -133,7 +131,8 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		foreach (
 			$this->processStreamOfStatements(
 				$Stream,
-				$this->statements(token_get_all($Stream->originalContent(), TOKEN_PARSE) ) ) as $statement)
+				$this->statements(
+					token_get_all($Stream->originalContent(), TOKEN_PARSE) ) ) as $statement)
 			yield from $statement;
 	}
 }
