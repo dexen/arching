@@ -31,7 +31,11 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		$ret = [];
 		$anonymousOpened = false;
 		foreach ($G as $statement)
-			if ($this->statementTypeP($statement, T_INCLUDE)) {
+			if (( ! $anonymousOpened) && $this->tokenTypeP($statement[0], T_OPEN_TAG)) {
+				yield $statement;
+				yield [ "\n", $this->genTokenNamespaceOpen(), "\n" ];
+				$anonymousOpened = true; }
+			else if ($this->statementTypeP($statement, T_INCLUDE)) {
 				$ex = $this->expressionOf($statement, 1);
 				throw new \Exception('unsupported case: an include');
 				if ($this->constStringP($ex))
@@ -48,31 +52,10 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 						$this->expressionToString($statement) )); }
 			else
 				yield $statement;
-return;
-/*
-			if ($anonymousOpened) {
-				if ($this->statementTypeP($statement, T_INCLUDE))
-					throw new \Exception('unsupported case: an include');
-				else if ($this->statementTypeP($statement, T_REQUIRE)) {
-					$ex = $this->expressionOf($statement, 1);
-						if ($this->constStringP($ex))
-							yield from $this->processRequireConstString($InputTu, $statement, $ex);
-						else
-							throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
-						$this->expressionToString($statement) )); }
-				else
-					yield $statement; }
-			else if ($this->tokenTypeP($statement[0], T_OPEN_TAG)) {
-				yield $statement;
-				yield [ "\n", $this->genTokenNamespaceOpen(), "\n" ];
-				$anonymousOpened = true; }
-			else
-				yield $statement;
 		if ($this->statementTypeP($statement, T_CLOSE_TAG))
 			yield [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
 		else
 			yield [ "\n", $this->genTokenNamespaceClose(), "\n" ];
-*/
 	}
 
 	protected
