@@ -10,6 +10,28 @@ class SubstitutionEngine2
 	}
 
 	protected
+	function devTdStatement(array $statement)
+	{
+		$type = $this->statementType($statement);
+		if (is_array($statement[0]))
+			$statement[0][0] = sprintf('%s (%d)', token_name($type), $type);
+		else
+			$statement[0] = [ sprintf('SINGULAR TOKEN (%s)', $type) ];
+		td($statement);
+	}
+
+	protected
+	function devTpStatement(array $statement)
+	{
+		$type = $this->statementType($statement);
+		if (is_array($statement[0]))
+			$statement[0][0] = sprintf('%s (%d)', token_name($type), $type);
+		else
+			$statement[0] = [ sprintf('SINGULAR TOKEN (%s)', $type) ];
+		return tp($statement);
+	}
+
+	protected
 	function unexpectedTokenException($token, $extra = null)
 	{
 		if (is_array($token))
