@@ -31,7 +31,16 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		$ret = [];
 		$anonymousOpened = false;
 		foreach ($G as $statement)
-			yield $statement;
+			if ($this->statementTypeP($statement, T_INCLUDE)) {
+				$ex = $this->expressionOf($statement, 1);
+				throw new \Exception('unsupported case: an include');
+				yield from $this->processRequireConstString($InputTu, $statement, $ex); }
+			else if ($this->statementTypeP($statement, T_REQUIRE)) {
+				$ex = $this->expressionOf($statement, 1);
+				yield from $this->processRequireConstString($InputTu, $statement, $ex); }
+			else
+				yield $statement;
+return;
 /*
 			if ($anonymousOpened) {
 				if ($this->statementTypeP($statement, T_INCLUDE))
