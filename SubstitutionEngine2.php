@@ -58,7 +58,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 				yield $statement;
 
 		if ($anonymousOpened) {
-			if ($this->statementTypeP($statement, T_CLOSE_TAG))
+			if ($this->statementTypeP($statement, [ T_CLOSE_TAG, T_INLINE_HTML ]))
 				yield [ '<?php', "\n", $this->genTokenNamespaceClose(), "\n" ];
 			else
 				yield [ "\n", $this->genTokenNamespaceClose(), "\n" ]; }
@@ -75,6 +75,8 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 				$this->statements(
 					token_get_all($Stream->originalContent(), TOKEN_PARSE) ) ) as $statement)
 			yield $statement;
+		if ($this->statementTypeP($statement, [ T_CLOSE_TAG, T_INLINE_HTML ]))
+			yield [ "<?php\n" ];
 	}
 
 	protected
