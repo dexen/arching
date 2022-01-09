@@ -102,6 +102,12 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		$st = [];
 		foreach ($a as $token) {
 			switch ($this->tokenType($token)) {
+			case T_WHITESPACE:
+				$st[] = $token;
+				if (count($st) === 1) {
+					$ret[] = $st;
+					$st = []; }
+				break;
 			case T_OPEN_TAG:
 				if ($st !== [])
 					$this->unexpectedTokenException($token, 'inside statement');
