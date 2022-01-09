@@ -50,7 +50,6 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 	{
 		global $SourceMap;
 
-#		$SourceMap->noteRequire($pn, $output_line_nr, count(explode("\n", file_get_contents($pn))));
 		yield sprintf('# arching file require: \'%s\'; => %s ', $TUS->selector(), $TUS->resolvedPathname());
 
 		foreach (
