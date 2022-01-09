@@ -34,10 +34,18 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 			if ($this->statementTypeP($statement, T_INCLUDE)) {
 				$ex = $this->expressionOf($statement, 1);
 				throw new \Exception('unsupported case: an include');
-				yield from $this->processRequireConstString($InputTu, $statement, $ex); }
+				if ($this->constStringP($ex))
+					yield from $this->processRequireConstString($InputTu, $statement, $ex);
+				else
+					throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
+						$this->expressionToString($statement) )); }
 			else if ($this->statementTypeP($statement, T_REQUIRE)) {
 				$ex = $this->expressionOf($statement, 1);
-				yield from $this->processRequireConstString($InputTu, $statement, $ex); }
+				if ($this->constStringP($ex))
+					yield from $this->processRequireConstString($InputTu, $statement, $ex);
+				else
+					throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
+						$this->expressionToString($statement) )); }
 			else
 				yield $statement;
 return;
