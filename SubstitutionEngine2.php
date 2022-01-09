@@ -2,6 +2,8 @@
 
 class SubstitutionEngine2
 {
+	use SE2Extras;
+
 	protected $Cfg;
 
 	function __construct(Cfg $Cfg)
