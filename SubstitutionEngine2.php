@@ -47,6 +47,18 @@ class SubstitutionEngine2
 	}
 
 	protected
+	function statementType(array $statement)
+	{
+		$ret = null;
+		foreach ($statement as $token)
+			if (($this->tokenType($token) === T_WHITESPACE) && ($ret !== null))
+				continue;
+			else if ($ret === null)
+				$ret = $this->tokenType($token);
+		return $ret;
+	}
+
+	protected
 	function statementTypeP(array $statement, $type) : bool
 	{
 		foreach ($statement as $token)
@@ -57,6 +69,15 @@ class SubstitutionEngine2
 			else
 				break;
 		return false;
+	}
+
+	protected
+	function tokenType($token)
+	{
+		if (is_array($token))
+			return $token[0];
+		else
+			return $token;
 	}
 
 	protected
@@ -199,12 +220,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 
 	function processOneStatement(TUStream $InputTu, array $statement) : \Generator
 	{
-		if (is_array($statement[0]))
-			$ttype = $statement[0][0];
-		else
-			$ttype = $statement[0];
-
-		switch ($ttype) {
+		switch ($this->statementType($statement)) {
 		case T_OPEN_TAG:
 		default:
 			yield from $statement;
