@@ -175,7 +175,6 @@ class SourceMap
 	}
 }
 
-require __DIR__ .'/' .'SubstitutionEngine.php';
 require __DIR__ .'/' .'SE2Extras.php';
 require __DIR__ .'/' .'SubstitutionEngine2.php';
 
