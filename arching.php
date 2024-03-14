@@ -200,6 +200,8 @@ class TUStream
 	function selector() : string { return $this->selector; }
 
 	function resolvedPathname() : ?string { return $this->resolved_pathname; }
+
+	function resolvedDir() : ?string { return dirname($this->resolved_pathname); }
 }
 
 if (in_array($argv[1] ?? '--help', [ '-h', '--help']))

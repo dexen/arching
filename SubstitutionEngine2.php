@@ -40,7 +40,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 				$this->namespaceOpen = static::NAMESPACE_ANONYMOUS;
 				$anonymousOpened = true; }
 			else if ($this->statementTypeP($statement, T_INCLUDE)) {
-				$ex = $this->expressionOf($statement, 1);
+				$ex = $this->expressionOf($InputTu, $statement, 1);
 				throw new \Exception('unsupported case: an include');
 				if ($this->constStringP($ex))
 					yield from $this->processRequireConstString($InputTu, $statement, $ex);
@@ -48,7 +48,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 					throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
 						$this->expressionToString($statement) )); }
 			else if ($this->statementTypeP($statement, T_REQUIRE)) {
-				$ex = $this->expressionOf($statement, 1);
+				$ex = $this->expressionOf($InputTu, $statement, 1);
 				if ($this->constStringP($ex))
 					yield from $this->processRequireConstString($InputTu, $statement, $ex);
 				else
@@ -85,7 +85,8 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		if (count($ex) === 1)
 			$rpn = $this->constStringParse($ex[0][1]);
 		else
-			throw new \Exception('not supported yet: string concatenation etc.');
+			$rpn = $this->constStringConcatenatedParse($ex);
+#			throw new \Exception('not supported yet: string concatenation etc.');
 
 		if ($rpn === 'arching-input.php')
 			return yield from $this->inlineArchinInput($rpn);

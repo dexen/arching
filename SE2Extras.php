@@ -74,7 +74,7 @@ trait SE2Extras
 	}
 
 	protected
-	function expressionOf(array $tokens, $start)
+	function expressionOf(TUStream $InputTu, array $tokens, $start)
 	{
 		$a = [];
 
@@ -95,10 +95,26 @@ trait SE2Extras
 				break;
 			case ';':
 				break 2;
+			case T_DIR:
+				$a[] = $this->stringToT_CONSTANT_ENCAPSED_STRING($InputTu->resolvedDir(), $t[2]);
+				break;
+			case '.':
+				$a[] = '.';
+				break;
 			default:
 				$this->unexpectedTokenException($t); } }
 
 		return $a;
+	}
+
+	protected
+	function stringToT_CONSTANT_ENCAPSED_STRING(string $string, int $line=null) : array
+	{
+		return [
+			T_CONSTANT_ENCAPSED_STRING,
+			var_export($string, true),
+			$line,
+		];
 	}
 
 	protected
@@ -108,7 +124,14 @@ trait SE2Extras
 			if ($this->tokenTypeP($tokens[0], T_CONSTANT_ENCAPSED_STRING))
 				return true;
 			# FIXME - handle const string concatenation too
-		return false;
+		foreach ($tokens as $token)
+			if ($this->tokenTypeP($token, T_CONSTANT_ENCAPSED_STRING))
+				;
+			else if ($this->tokenTypeP($token, '.'))
+				;
+			else
+				return false;
+		return true;
 	}
 
 	function genTokenNamespaceOpen()
@@ -143,5 +166,21 @@ trait SE2Extras
 			return stripslashes(
 				substr($encoded, 1, strlen($encoded)-2) );
 		throw new \Exception(sprintf('unsupported case: not a single-quoted string: "%s"', $encoded));
+	}
+
+	protected
+	function constStringConcatenatedParse(array $tokens) : string
+	{
+		$v = '';
+
+		foreach ($tokens as $t) {
+			if ($t === '.')
+				;
+			else if ($t[0] === T_CONSTANT_ENCAPSED_STRING)
+				$v .= $this->constStringParse($t[1]);
+			else
+				throw new \Exception(sprintf('unsupported token type: "%s"', $this->tokenType($t))); }
+
+		return $v;
 	}
 }
