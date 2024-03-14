@@ -99,7 +99,7 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 		else
 			return yield from $this->inlineAnIncludeByDirs(
 				array_merge($this->Cfg->overrideDirs(), $this->Cfg->projectIncludeDirs(),
-					[dirname($InputTu->resolvedPathname()),$this->Cfg->scriptCwd()] ),
+					[dirname($InputTu->resolvedPathname()??''),$this->Cfg->scriptCwd()] ),
 			$rpn );
 	}
 
