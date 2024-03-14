@@ -5,23 +5,29 @@ trait SE2Extras
 	protected
 	function devTdStatement(array $statement)
 	{
-		$type = $this->statementType($statement);
-		if (is_array($statement[0]))
-			$statement[0][0] = sprintf('%s (%d)', token_name($type), $type);
-		else
-			$statement[0] = [ sprintf('SINGULAR TOKEN (%s)', $type) ];
-		td($statement);
+		foreach ($statement as $token) {
+			if (is_array($token))
+				$token[0] = sprintf('%s (%d)', token_name($token[0]), $this->tokenType($token));
+			else
+				$token =  [ sprintf('SINGULAR TOKEN (%s)', $this->tokenType($token)) ];
+			$a[] = $token;
+		}
+
+		td($a);
 	}
 
 	protected
 	function devTpStatement(array $statement)
 	{
-		$type = $this->statementType($statement);
-		if (is_array($statement[0]))
-			$statement[0][0] = sprintf('%s (%d)', token_name($type), $type);
-		else
-			$statement[0] = [ sprintf('SINGULAR TOKEN (%s)', $type) ];
-		return tp($statement);
+		foreach ($statement as $token) {
+			if (is_array($token))
+				$token[0] = sprintf('%s (%d)', token_name($type), $type);
+			else
+				$token =  [ sprintf('SINGULAR TOKEN (%s)', $type) ];
+			$a[] = $token;
+		}
+
+		return tp($a);
 	}
 
 	protected
@@ -34,6 +40,49 @@ trait SE2Extras
 			else if ($ret === null)
 				$ret = $this->tokenType($token);
 		return $ret;
+	}
+
+	protected
+	function statementFunctionCallLocation(array $statement, int $start) : array
+	{
+		$length = 0;
+		$paren_level = 0;
+		$found_parens = false;
+		foreach ($statement as $n => $token) {
+			if ($n < $start)
+				continue;
+			++$length;
+			if ($this->tokenType($token) === '(') {
+				$found_parens = true;
+				++$paren_level; }
+			else if ($this->tokenType($token) === ')')
+				--$paren_level;
+			if (($found_parens) && ($paren_level <= 0)) {
+				break; }
+		}
+		return [ $start, $length ];
+	}
+
+	protected
+	function statementFindFunctionCallToFunction(array $statement, array $relevantFunctions) : ?array
+	{
+		foreach ($statement as $n => $token) {
+			$type = $this->tokenType($token);
+			$ntoken = $statement[$n+1] ?? null;
+			$ntype = $this->tokentype($ntoken);
+			if (($type === T_STRING) && ($ntype === '('))
+				if (in_array($function_name = $token[1], $relevantFunctions, $strict = true)) {
+					list($start, $length) = $this->statementFunctionCallLocation($statement, $n);
+					return [ $function_name, $start, $length]; } }
+		return null;
+	}
+
+	protected
+	function inlinedContentFunctionCall(TUStream $InputTu, array $statement, int $start, int $length, string $function_name) : array
+	{
+		$a = array_slice($statement, $start, $length);
+		$aa = array_slice($statement, $start+2, $length-3);
+		return $this->expressionOf($InputTu, $aa, 0);
 	}
 
 	protected

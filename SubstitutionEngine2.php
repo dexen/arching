@@ -54,6 +54,16 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 				else
 					throw new \Exception(sprintf('Unsupported case: not a const string expression: "%s"',
 						$this->expressionToString($statement) )); }
+			else if (($this->statementFindFunctionCallToFunction($statement, ['file_get_contents'])) !== null) {
+				list($function_name, $start, $length) = $this->statementFindFunctionCallToFunction($statement, ['file_get_contents']);
+				$statement2 = $statement;
+				array_splice(
+					$statement2,
+					$start,
+					$length,
+					$ex = $this->processInlineConstString($InputTu, $statement,
+						$this->inlinedContentFunctionCall($InputTu, $statement, $start, $length, $function_name)));
+				yield $statement2; }
 			else
 				yield $statement;
 
@@ -77,6 +87,30 @@ TRACE('%% trying %s -> %s', $rpn, $pn);
 			yield $statement;
 		if ($this->statementTypeP($statement, [ T_CLOSE_TAG, T_INLINE_HTML ]))
 			yield [ "<?php\n" ];
+	}
+
+	protected
+	function processInlineConstString(TUStream $InputTu, array $statement, array $ex) : array
+	{
+		if (count($ex) === 1)
+			$rpn = $this->constStringParse($ex[0][1]);
+		else
+			$rpn = $this->constStringConcatenatedParse($ex);
+#			throw new \Exception('not supported yet: string concatenation etc.');
+
+		$token = $ex[0];
+
+		if ($rpn[0] === '/')
+			throw new \RuntimeException('unsupported: absolute pathname');
+### FIXME: this should be a separate case
+### FIXME: add path resolution
+		elseif ($rpn[0] === '.') {
+			$value = file_get_contents($rpn);
+			return [ $this->stringToT_CONSTANT_ENCAPSED_STRING($value, $token[2]) ]; }
+### FIXME: add path resolution
+		else {
+			$value = file_get_contents($rpn);
+			return [ $this->stringToT_CONSTANT_ENCAPSED_STRING($value, $token[2]) ]; }
 	}
 
 	protected
